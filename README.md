@@ -47,14 +47,11 @@ Deep-Learning-Optimizer-Visualizer/
 │   ├── test_neural_net.py     # Forward pass and numerical gradient check
 │   ├── test_streamlit_app.py  # Streamlit UI AppTest integration test
 │   └── test_restrictions.py   # Static analysis verifying 0 prohibited imports
-├── docs/
-│   └── Lab_Exercise_Optimizer_Visualizer_SGD_to_AdamW.pdf # Assignment specification
 ├── requirements.txt           # Dependency list
 ├── .gitignore                 # Excludes cache, virtual environments, sensitive files
 ├── REQUIREMENTS_CHECKLIST.md  # Comprehensive compliance matrix
 ├── REFLECTION_ANSWERS.md      # Answers to Sections A7 and B4
 ├── CONCLUSION.md              # Academic conclusion on optimizer evolution
-├── DEMO_GUIDE.md              # 2–4 minute lab presentation guide
 └── README.md                  # Project documentation
 ```
 

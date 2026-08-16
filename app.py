@@ -100,7 +100,7 @@ if "nn_is_training" not in st.session_state:
 
 # Title & Header
 st.markdown("<div class='main-title'>Optimizer Visualizer</div>", unsafe_allow_html=True)
-st.markdown("<div class='sub-title'>Explore how SGD, Momentum, NAG, AdaGrad, RMSProp, Adam, and AdamW behave during optimization.</div>", unsafe_allow_html=True)
+st.markdown("<div class='sub-title'>Explore how seven optimization algorithms behave on mathematical loss surfaces and during neural-network training.</div>", unsafe_allow_html=True)
 
 
 # Main Tabs Navigation

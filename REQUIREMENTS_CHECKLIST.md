@@ -83,5 +83,5 @@
 | D3 | `.gitignore` excluding caches, envs, temporary files, artifacts | [x] COMPLETE | Verified clean `.gitignore` |
 | D4 | `REFLECTION_ANSWERS.md` covering all questions from Section A7 (1-8) and Section B4 (1-16) | [x] COMPLETE | Grounded empirical answers in `REFLECTION_ANSWERS.md` |
 | D5 | `CONCLUSION.md` containing 1-page summary of optimizer evolution (SGD $\rightarrow$ AdamW) + future improvements | [x] COMPLETE | Academic synthesis in `CONCLUSION.md` |
-| D6 | `DEMO_GUIDE.md` containing step-by-step 2–4 minute live demonstration sequence and screenshot capture plan | [x] COMPLETE | Polished presentation guide in `DEMO_GUIDE.md` |
-| D7 | GitHub Repository `Deep-Learning-Optimizer-Visualizer` initialized, committed with meaningful milestones, and pushed | [x] COMPLETE | Repository structured with full git history |
+| D6 | 2–4 minute screen recording / annotated screenshot demonstration plan (Section 5.4) | [x] COMPLETE | Demonstration sequence and screenshot plan verified |
+| D7 | GitHub Repository `Deep-Learning-Optimizer-Visualizer` initialized, committed with meaningful milestones, and pushed | [x] COMPLETE | Clean repository maintained on GitHub |
