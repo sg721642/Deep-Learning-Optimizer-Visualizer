@@ -86,16 +86,28 @@ st.markdown("""
 
 
 # Initialize Session State
-if "anim_step" not in st.session_state:
-    st.session_state.anim_step = 0
 if "is_playing" not in st.session_state:
     st.session_state.is_playing = False
+if "part_a_iteration_slider" not in st.session_state:
+    st.session_state.part_a_iteration_slider = 0
+if "play_advance" not in st.session_state:
+    st.session_state.play_advance = 0
+if "part_a_max_limit" not in st.session_state:
+    st.session_state.part_a_max_limit = 500
 if "dataset_manager" not in st.session_state:
     st.session_state.dataset_manager = DatasetManager(test_size=0.2, random_state=42)
 if "nn_histories" not in st.session_state:
     st.session_state.nn_histories = {}
 if "nn_is_training" not in st.session_state:
     st.session_state.nn_is_training = False
+
+# Advance iteration before widget instantiation when playing
+if st.session_state.is_playing and st.session_state.play_advance > 0:
+    st.session_state.part_a_iteration_slider = min(
+        st.session_state.part_a_iteration_slider + st.session_state.play_advance,
+        st.session_state.part_a_max_limit
+    )
+    st.session_state.play_advance = 0
 
 
 # Title & Header
@@ -196,6 +208,26 @@ with tabs[0]:
 
         max_steps = st.slider("Max Iterations", min_value=50, max_value=500, value=300, step=25, key="part_a_max_steps_slider")
 
+        # Detect parameter modifications to reset animation state cleanly
+        curr_params = (
+            surface_key,
+            tuple(sorted(selected_opts)),
+            float(lr),
+            float(beta_momentum),
+            float(beta_rmsprop),
+            float(beta1_adam),
+            float(beta2_adam),
+            float(weight_decay),
+            float(x0),
+            float(y0),
+            int(max_steps)
+        )
+        if "part_a_prev_params" not in st.session_state or st.session_state.part_a_prev_params != curr_params:
+            st.session_state.part_a_prev_params = curr_params
+            st.session_state.part_a_iteration_slider = 0
+            st.session_state.is_playing = False
+            st.session_state.play_advance = 0
+
         # Simulation Computation
         trajectories: Dict[str, np.ndarray] = {}
         losses_dict: Dict[str, np.ndarray] = {}
@@ -227,42 +259,60 @@ with tabs[0]:
             losses_dict[opt_name] = loss_hist
 
         actual_max_len = max([len(t) for t in trajectories.values()]) if trajectories else max_steps
+        max_valid_step = max(actual_max_len - 1, 1)
+        st.session_state.part_a_max_limit = max_valid_step
+
+        # Button callbacks
+        def on_step_clicked():
+            st.session_state.is_playing = False
+            max_limit = st.session_state.get("part_a_max_limit", 300)
+            st.session_state.part_a_iteration_slider = min(
+                st.session_state.get("part_a_iteration_slider", 0) + 1,
+                max_limit
+            )
+
+        def on_reset_clicked():
+            st.session_state.is_playing = False
+            st.session_state.part_a_iteration_slider = 0
+            st.session_state.play_advance = 0
+
+        def on_play_clicked():
+            st.session_state.is_playing = True
+
+        def on_pause_clicked():
+            st.session_state.is_playing = False
+            st.session_state.play_advance = 0
 
         # Animation Controls
         st.markdown("#### Animation Controls")
         c_play, c_pause, c_step, c_reset = st.columns(4)
         
         with c_play:
-            if st.button("Play", use_container_width=True, key="btn_play"):
-                st.session_state.is_playing = True
+            st.button("Play", use_container_width=True, key="part_a_play", on_click=on_play_clicked)
         with c_pause:
-            if st.button("Pause", use_container_width=True, key="btn_pause"):
-                st.session_state.is_playing = False
+            st.button("Pause", use_container_width=True, key="part_a_pause", on_click=on_pause_clicked)
         with c_step:
-            if st.button("Step", use_container_width=True, key="btn_step"):
-                st.session_state.is_playing = False
-                st.session_state.anim_step = min(st.session_state.anim_step + 5, actual_max_len - 1)
+            st.button("Step", use_container_width=True, key="part_a_step", on_click=on_step_clicked)
         with c_reset:
-            if st.button("Reset", use_container_width=True, key="btn_reset"):
-                st.session_state.is_playing = False
-                st.session_state.anim_step = 0
+            st.button("Reset", use_container_width=True, key="part_a_reset", on_click=on_reset_clicked)
 
         anim_speed = st.select_slider(
             "Animation Speed",
             options=["1x", "2x", "5x", "Max"],
-            value="5x",
-            key="anim_speed_slider"
+            value="2x",
+            key="part_a_anim_speed"
         )
-        step_increment = {"1x": 1, "2x": 3, "5x": 8, "Max": 25}[anim_speed]
+        step_increment = {"1x": 1, "2x": 2, "5x": 5, "Max": 15}[anim_speed]
 
-        st.session_state.anim_step = st.slider(
+        # Slider for manual scrubbing and step inspection
+        st.slider(
             "Iteration",
             min_value=0,
-            max_value=max(actual_max_len - 1, 1),
-            value=min(st.session_state.anim_step, max(actual_max_len - 1, 1)),
+            max_value=max_valid_step,
             step=1,
-            key="part_a_scrub_bar"
+            key="part_a_iteration_slider"
         )
+        current_step = st.session_state.part_a_iteration_slider
 
     with col_viz:
         st.markdown("#### Synchronized Trajectory & Loss Views")
@@ -272,7 +322,7 @@ with tabs[0]:
             fig_contour = create_contour_figure(
                 surface=selected_surface,
                 trajectories=trajectories,
-                current_step=st.session_state.anim_step,
+                current_step=current_step,
                 start_point=(x0, y0),
                 x_range=(-max(abs(x0) + 2, 10), max(abs(x0) + 2, 10)),
                 y_range=(-max(abs(y0) + 2, 10), max(abs(y0) + 2, 10))
@@ -282,18 +332,18 @@ with tabs[0]:
         with v2_col:
             fig_loss = create_loss_curve_figure(
                 losses_dict=losses_dict,
-                current_step=st.session_state.anim_step,
+                current_step=current_step,
                 log_scale=True
             )
             st.plotly_chart(fig_loss, use_container_width=True, key="fig_loss_chart")
 
         # Step Status Metrics
-        st.markdown("##### Current Optimizer Position & Loss")
+        st.markdown(f"##### Current Optimizer Position & Loss (Iteration {current_step}/{max_valid_step})")
         m_cols = st.columns(len(selected_opts))
         for idx, opt_name in enumerate(selected_opts):
             with m_cols[idx]:
                 traj = trajectories[opt_name]
-                step_idx = min(st.session_state.anim_step, len(traj) - 1)
+                step_idx = min(current_step, len(traj) - 1)
                 curr_pos = traj[step_idx]
                 curr_loss = losses_dict[opt_name][step_idx]
                 st.markdown(f"""
@@ -305,12 +355,15 @@ with tabs[0]:
                 """, unsafe_allow_html=True)
 
     # Automatic animation loop step
-    if st.session_state.is_playing and st.session_state.anim_step < actual_max_len - 1:
-        st.session_state.anim_step = min(st.session_state.anim_step + step_increment, actual_max_len - 1)
-        time.sleep(0.05)
-        st.rerun()
-    elif st.session_state.is_playing and st.session_state.anim_step >= actual_max_len - 1:
-        st.session_state.is_playing = False
+    if st.session_state.is_playing:
+        if current_step < max_valid_step:
+            sleep_times = {"1x": 0.12, "2x": 0.07, "5x": 0.03, "Max": 0.01}
+            time.sleep(sleep_times.get(anim_speed, 0.05))
+            st.session_state.play_advance = step_increment
+            st.rerun()
+        else:
+            st.session_state.is_playing = False
+            st.session_state.play_advance = 0
 
 
 # ==============================================================================

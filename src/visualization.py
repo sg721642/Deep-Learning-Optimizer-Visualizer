@@ -115,7 +115,7 @@ def create_contour_figure(
 
     fig.update_layout(
         title=dict(
-            text=f"<b>View 1: Parameter Trajectories on {surface.formula_str}</b> (Condition № κ={surface.condition_number:.0f})",
+            text=f"<b>View 1: Parameter Trajectories on {surface.formula_str}</b> (Step {current_step}, κ={surface.condition_number:.0f})",
             x=0.5,
             xanchor="center",
             font=dict(size=14)
