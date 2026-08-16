@@ -117,8 +117,7 @@ tabs = st.tabs([
     "🧠 Part B: Real Neural Network Training",
     "🔬 Conditioning & LR Sensitivity Explorers",
     "💡 Explain-As-You-Go",
-    "📖 Reflection Answers & Conclusion",
-    "🛠️ How-To & Demo Guide"
+    "📖 How to Use This Tool"
 ])
 
 
@@ -136,7 +135,8 @@ with tabs[0]:
             "Select 2D Loss Surface",
             options=list(SURFACES.keys()),
             index=list(SURFACES.keys()).index(DEFAULT_SURFACE_KEY),
-            help="Choose between L1 (mild bowl) to L4 (extremely ill-conditioned narrow valley)"
+            help="Choose between L1 (mild bowl) to L4 (ill-conditioned narrow valley)",
+            key="part_a_surface_select"
         )
         selected_surface = get_surface(surface_key)
 
@@ -150,7 +150,8 @@ with tabs[0]:
             "Select Optimizers to Overlay",
             options=all_opts,
             default=["SGD", "Momentum", "AdaGrad", "Adam"],
-            help="Select one or more optimizers to compare trajectories simultaneously"
+            help="Select one or more optimizers to compare trajectories simultaneously",
+            key="part_a_optimizer_multiselect"
         )
 
         if not selected_opts:
@@ -167,26 +168,27 @@ with tabs[0]:
             value=0.01,
             step=0.001,
             format="%.4f",
-            help="Default is 0.01. Controls step magnitude along the gradient."
+            help="Default is 0.01. Controls step magnitude along the gradient.",
+            key="part_a_lr_input"
         )
 
         # Optimizer-specific parameters inside expander
         with st.expander("Advanced Optimizer Parameters", expanded=False):
-            beta_momentum = st.slider("Momentum / NAG β", min_value=0.0, max_value=0.99, value=0.9, step=0.05)
-            beta_rmsprop = st.slider("RMSProp β", min_value=0.0, max_value=0.99, value=0.9, step=0.05)
-            beta1_adam = st.slider("Adam/AdamW β₁", min_value=0.0, max_value=0.99, value=0.9, step=0.05)
-            beta2_adam = st.slider("Adam/AdamW β₂", min_value=0.5, max_value=0.9999, value=0.999, step=0.001, format="%.4f")
-            weight_decay = st.number_input("AdamW Weight Decay (λ)", min_value=0.0, max_value=0.5, value=0.001, step=0.001, format="%.4f")
+            beta_momentum = st.slider("Momentum / NAG β", min_value=0.0, max_value=0.99, value=0.9, step=0.05, key="part_a_beta_momentum")
+            beta_rmsprop = st.slider("RMSProp β", min_value=0.0, max_value=0.99, value=0.9, step=0.05, key="part_a_beta_rmsprop")
+            beta1_adam = st.slider("Adam/AdamW β₁", min_value=0.0, max_value=0.99, value=0.9, step=0.05, key="part_a_beta1_adam")
+            beta2_adam = st.slider("Adam/AdamW β₂", min_value=0.5, max_value=0.9999, value=0.999, step=0.001, format="%.4f", key="part_a_beta2_adam")
+            weight_decay = st.number_input("AdamW Weight Decay (λ)", min_value=0.0, max_value=0.5, value=0.001, step=0.001, format="%.4f", key="part_a_lambda_adamw")
 
         # Starting point
         st.markdown("#### 📍 Starting Position & Steps")
         col_x0, col_y0 = st.columns(2)
         with col_x0:
-            x0 = st.number_input("Initial x₀", value=8.0, step=0.5)
+            x0 = st.number_input("Initial x₀", value=8.0, step=0.5, key="part_a_x0_input")
         with col_y0:
-            y0 = st.number_input("Initial y₀", value=8.0, step=0.5)
+            y0 = st.number_input("Initial y₀", value=8.0, step=0.5, key="part_a_y0_input")
 
-        max_steps = st.slider("Max Iterations", min_value=50, max_value=500, value=300, step=25)
+        max_steps = st.slider("Max Iterations", min_value=50, max_value=500, value=300, step=25, key="part_a_max_steps_slider")
 
         # Simulation Computation
         trajectories: Dict[str, np.ndarray] = {}
@@ -226,24 +228,25 @@ with tabs[0]:
         c_play, c_pause, c_step, c_reset = st.columns(4)
         
         with c_play:
-            if st.button("▶️ Play", use_container_width=True):
+            if st.button("▶️ Play", use_container_width=True, key="btn_play"):
                 st.session_state.is_playing = True
         with c_pause:
-            if st.button("⏸️ Pause", use_container_width=True):
+            if st.button("⏸️ Pause", use_container_width=True, key="btn_pause"):
                 st.session_state.is_playing = False
         with c_step:
-            if st.button("⏭️ Step", use_container_width=True):
+            if st.button("⏭️ Step", use_container_width=True, key="btn_step"):
                 st.session_state.is_playing = False
                 st.session_state.anim_step = min(st.session_state.anim_step + 5, actual_max_len - 1)
         with c_reset:
-            if st.button("🔄 Reset", use_container_width=True):
+            if st.button("🔄 Reset", use_container_width=True, key="btn_reset"):
                 st.session_state.is_playing = False
                 st.session_state.anim_step = 0
 
         anim_speed = st.select_slider(
             "Animation Speed",
             options=["Slow (1x)", "Normal (2x)", "Fast (5x)", "Instant (Max)"],
-            value="Fast (5x)"
+            value="Fast (5x)",
+            key="anim_speed_slider"
         )
         step_increment = {"Slow (1x)": 1, "Normal (2x)": 3, "Fast (5x)": 8, "Instant (Max)": 25}[anim_speed]
 
@@ -253,7 +256,8 @@ with tabs[0]:
             min_value=0,
             max_value=max(actual_max_len - 1, 1),
             value=min(st.session_state.anim_step, max(actual_max_len - 1, 1)),
-            step=1
+            step=1,
+            key="part_a_scrub_bar"
         )
 
     with col_viz:
@@ -365,7 +369,7 @@ with tabs[1]:
             options=all_opts,
             default=["SGD", "Momentum", "AdaGrad", "RMSProp", "Adam", "AdamW"],
             help="Select optimizers for benchmark training",
-            key="nn_selected_opts_key"
+            key="nn_selected_opts_multiselect"
         )
 
         nn_lr = st.number_input(
@@ -375,18 +379,18 @@ with tabs[1]:
             value=0.01,
             step=0.005,
             format="%.4f",
-            key="nn_lr_key"
+            key="nn_lr_input"
         )
 
-        nn_epochs = st.slider("Epochs", min_value=10, max_value=200, value=80, step=10)
-        nn_batch_size = st.selectbox("Batch Size", options=[16, 32, 64, meta['train_samples']], index=1, format_func=lambda x: f"{x} (Full Batch)" if x == meta['train_samples'] else str(x))
+        nn_epochs = st.slider("Epochs", min_value=10, max_value=200, value=80, step=10, key="nn_epochs_slider")
+        nn_batch_size = st.selectbox("Batch Size", options=[16, 32, 64, meta['train_samples']], index=1, format_func=lambda x: f"{x} (Full Batch)" if x == meta['train_samples'] else str(x), key="nn_batch_size_select")
 
         with st.expander("Optimizer Specific Hyperparameters", expanded=False):
-            nn_beta1 = st.slider("Momentum / Adam β₁", 0.0, 0.99, 0.9, 0.05, key="nn_beta1")
-            nn_beta2 = st.slider("Adam / AdamW β₂", 0.5, 0.9999, 0.999, 0.001, format="%.4f", key="nn_beta2")
-            nn_wd = st.number_input("AdamW Weight Decay (λ)", 0.0, 0.1, 0.001, 0.001, format="%.4f", key="nn_wd")
+            nn_beta1 = st.slider("Momentum / Adam β₁", 0.0, 0.99, 0.9, 0.05, key="nn_beta1_slider")
+            nn_beta2 = st.slider("Adam / AdamW β₂", 0.5, 0.9999, 0.999, 0.001, format="%.4f", key="nn_beta2_slider")
+            nn_wd = st.number_input("AdamW Weight Decay (λ)", 0.0, 0.1, 0.001, 0.001, format="%.4f", key="nn_wd_input")
 
-        train_btn = st.button("🚀 Start Training", type="primary", use_container_width=True)
+        train_btn = st.button("🚀 Start Training", type="primary", use_container_width=True, key="nn_start_train_btn")
 
     with col_nn_dash:
         st.markdown("#### 📊 Live Training Dashboard")
@@ -450,15 +454,18 @@ with tabs[1]:
 
                 st.session_state.nn_histories = histories
                 progress_bar.progress(1.0)
-                status_text.success("🎉 Training completed successfully for all selected optimizers!")
-
-        # If histories exist in session state, render them
-        if st.session_state.nn_histories:
+                status_text.success("Training completed successfully for all selected optimizers.")
+        elif st.session_state.nn_histories:
+            # Populate charts from session state when not actively training in current script run
             h = st.session_state.nn_histories
             plot_loss_holder.plotly_chart(create_nn_loss_figure(h), use_container_width=True)
             plot_acc_holder.plotly_chart(create_nn_accuracy_figure(h), use_container_width=True)
             plot_eff_lr_holder.plotly_chart(create_effective_lr_figure(h), use_container_width=True)
+        else:
+            st.info("Click **'🚀 Start Training'** above to run the neural network benchmark live.")
 
+        if st.session_state.nn_histories:
+            h = st.session_state.nn_histories
             st.markdown("### 📋 Automatic Comparison Table (PDF Section B3)")
             st.markdown("Convergence epoch is auto-computed as the first epoch where validation loss reaches within **1% of its final value**.")
             
@@ -478,16 +485,16 @@ with tabs[2]:
 
     with col_exp1:
         st.markdown("#### 1. Conditioning Explorer (PDF Section A5)")
-        st.markdown("""
-        The condition number $\\kappa = \\frac{\\lambda_{\\max}}{\\lambda_{\\min}}$ of the Hessian matrix measures how elongated the loss bowl is:
-        - **$L_1 = x^2 + 10y^2$** ($\\kappa = 10$): Mild anisotropy.
-        - **$L_2 = x^2 + 50y^2$** ($\\kappa = 50$): Moderate elongation.
-        - **$L_3 = x^2 + 100y^2$** ($\\kappa = 100$): Steep narrow canyon.
-        - **$L_4 = x^2 + 1000y^2$** ($\\kappa = 1000$): Extreme pathological conditioning.
+        st.markdown(r"""
+        The condition number $\kappa = \frac{\lambda_{\max}}{\lambda_{\min}}$ of the Hessian matrix measures how elongated the loss bowl is:
+        - **$L_1 = x^2 + 10y^2$** ($\kappa = 10$): Mild anisotropy.
+        - **$L_2 = x^2 + 50y^2$** ($\kappa = 50$): Moderate elongation.
+        - **$L_3 = x^2 + 100y^2$** ($\kappa = 100$): Steep narrow canyon.
+        - **$L_4 = x^2 + 1000y^2$** ($\kappa = 1000$): Ill-conditioned valley.
         """)
 
-        cond_opt = st.selectbox("Select Optimizer for Conditioning Analysis", ["SGD", "Momentum", "NAG", "AdaGrad", "RMSProp", "Adam", "AdamW"], index=0)
-        cond_lr = st.slider("Learning Rate for Conditioning Test", 0.001, 0.05, 0.01, 0.001, format="%.3f")
+        cond_opt = st.selectbox("Select Optimizer for Conditioning Analysis", ["SGD", "Momentum", "NAG", "AdaGrad", "RMSProp", "Adam", "AdamW"], index=0, key="cond_opt_select")
+        cond_lr = st.slider("Learning Rate for Conditioning Test", 0.001, 0.05, 0.01, 0.001, format="%.3f", key="cond_lr_slider")
 
         cond_trajs = {}
         for s_name, surf in SURFACES.items():
@@ -506,20 +513,20 @@ with tabs[2]:
             height=400,
             margin=dict(l=30, r=20, t=40, b=30)
         )
-        st.plotly_chart(fig_cond, use_container_width=True)
+        st.plotly_chart(fig_cond, use_container_width=True, key="fig_cond_chart")
 
-        st.caption("Notice how SGD violently oscillates in the y-direction on $L_4$ because the gradient is 1000x larger along y than x!")
+        st.caption("On $L_4$, SGD exhibits pronounced vertical oscillation because the gradient magnitude along y is substantially larger than along x.")
 
     with col_exp2:
         st.markdown("#### 2. Learning-Rate Sensitivity Explorer (PDF Section A6)")
-        st.markdown("""
+        st.markdown(r"""
         Sweep learning rates across three canonical regimes:
-        - **$\\eta = 0.001$**: Safe, slow, smooth convergence.
-        - **$\\eta = 0.01$**: Standard default, balanced progress.
-        - **$\\eta = 0.1$**: Aggressive step, exposes oscillation or catastrophic divergence.
+        - **$\eta = 0.001$**: Lower step size, smooth steady convergence.
+        - **$\eta = 0.01$**: Standard baseline learning rate.
+        - **$\eta = 0.1$**: Higher step size, highlights oscillation or divergence boundaries.
         """)
 
-        sens_opt = st.selectbox("Select Optimizer for Sensitivity Analysis", ["SGD", "Momentum", "AdaGrad", "RMSProp", "Adam"], index=0)
+        sens_opt = st.selectbox("Select Optimizer for Sensitivity Analysis", ["SGD", "Momentum", "AdaGrad", "RMSProp", "Adam"], index=0, key="sens_opt_select")
         sens_surf = SURFACES[DEFAULT_SURFACE_KEY]
 
         fig_sens = go.Figure()
@@ -546,8 +553,8 @@ with tabs[2]:
             height=400,
             margin=dict(l=30, r=20, t=40, b=30)
         )
-        st.plotly_chart(fig_sens, use_container_width=True)
-        st.caption("At η = 0.1 on the default bowl (2y' = 100y), SGD immediately diverges because η * 100 = 10 > 2 (stability limit).")
+        st.plotly_chart(fig_sens, use_container_width=True, key="fig_sens_chart")
+        st.caption("At η = 0.1 on the default bowl (where the maximum Hessian eigenvalue is 100), SGD exceeds the numerical stability threshold (η > 2/λ_max = 0.02).")
 
 
 # ==============================================================================
@@ -565,158 +572,95 @@ with tabs[3]:
     ])
 
     with exp_nag:
-        st.markdown("""
+        st.markdown(r"""
         #### Nesterov Accelerated Gradient (NAG)
         **Core Update Rule:**
-        $$\\theta_{\\text{lookahead}} = \\theta_t - \\beta v_{t-1}$$
-        $$v_t = \\beta v_{t-1} + (1 - \\beta) \\nabla L(\\theta_{\\text{lookahead}})$$
-        $$\\theta_{t+1} = \\theta_t - \\eta v_t$$
+        $$\theta_{\text{lookahead}} = \theta_t - \beta v_{t-1}$$
+        $$v_t = \beta v_{t-1} + (1 - \beta) \nabla L(\theta_{\text{lookahead}})$$
+        $$\theta_{t+1} = \theta_t - \eta v_t$$
 
         **Why Look-Ahead Reduces Overshoot:**
-        - Standard Momentum computes the gradient at the *current* point $\\theta_t$ and adds accumulated velocity blindly, often overshooting valleys before correcting.
-        - NAG peeks ahead to $\\theta_t - \\beta v_{t-1}$ *before* evaluating the gradient. If the momentum is carrying the optimizer up the opposite slope, the look-ahead gradient immediately signals a strong upward slope and applies **anticipatory braking**.
+        - Standard Momentum computes the gradient at the *current* point $\theta_t$ and adds accumulated velocity blindly, which can overshoot valleys before correcting.
+        - NAG evaluates the gradient at the look-ahead point $\theta_t - \beta v_{t-1}$. If the momentum is carrying the parameters up the opposite slope, the look-ahead gradient detects the upward slope in advance and applies an opposing corrective force before the full update is applied.
         """)
 
     with exp_adagrad:
-        st.markdown("""
+        st.markdown(r"""
         #### AdaGrad (Adaptive Gradient Algorithm)
         **Core Update Rule:**
         $$G_t = G_{t-1} + g_t^2$$
-        $$\\theta_{t+1} = \\theta_t - \\frac{\\eta}{\\sqrt{G_t + \\epsilon}} \\odot g_t$$
+        $$\theta_{t+1} = \theta_t - \frac{\eta}{\sqrt{G_t + \epsilon}} \odot g_t$$
 
         **Why Parameter-Wise Adaptive Scaling Works:**
-        - In anisotropic loss landscapes (e.g. $L(x, y) = x^2 + 50y^2$), gradients along $y$ are enormous ($100y$) while gradients along $x$ are tiny ($2x$).
-        - AdaGrad accumulates squared gradients independently for every parameter coordinate:
-          $$G_{t, y} \\gg G_{t, x} \\implies \\frac{\\eta}{\\sqrt{G_{t, y}}} \\ll \\frac{\\eta}{\\sqrt{G_{t, x}}}$$
-        - This dynamically shrinks the step size along the steep $y$-axis to prevent oscillations while maintaining a relatively large effective learning rate along the shallow $x$-axis.
+        - In anisotropic loss landscapes (such as $L(x, y) = x^2 + 50y^2$), gradients along $y$ are substantially larger ($100y$) than along $x$ ($2x$).
+        - AdaGrad accumulates squared gradients independently for every coordinate:
+          $$G_{t, y} \gg G_{t, x} \implies \frac{\eta}{\sqrt{G_{t, y}}} \ll \frac{\eta}{\sqrt{G_{t, x}}}$$
+        - This dynamically dampens the step size along the steep $y$-axis while maintaining a relatively larger effective learning rate along the shallow $x$-axis.
         """)
 
     with exp_rmsprop:
-        st.markdown("""
+        st.markdown(r"""
         #### RMSProp (Root Mean Square Propagation)
         **Core Update Rule:**
-        $$v_t = \\beta v_{t-1} + (1 - \\beta) g_t^2$$
-        $$\\theta_{t+1} = \\theta_t - \\frac{\\eta}{\\sqrt{v_t + \\epsilon}} \\odot g_t$$
+        $$v_t = \beta v_{t-1} + (1 - \beta) g_t^2$$
+        $$\theta_{t+1} = \theta_t - \frac{\eta}{\sqrt{v_t + \epsilon}} \odot g_t$$
 
         **How It Fixes AdaGrad's Diminishing Learning Rate:**
-        - AdaGrad strictly adds positive terms $g_t^2$ to $G_t$ monotonically ($G_t \\to \\infty$), causing the effective learning rate $\\frac{\\eta}{\\sqrt{G_t}}$ to shrink toward zero and stall training prematurely.
-        - RMSProp replaces the infinite sum with an **exponential moving average** (discount factor $\\beta=0.9$), ensuring that ancient historical gradients are exponentially forgotten. The effective learning rate stabilizes based on recent gradient magnitudes rather than decaying to zero.
+        - AdaGrad continuously accumulates positive squared gradients $g_t^2$ into $G_t$, causing the effective learning rate $\frac{\eta}{\sqrt{G_t}}$ to shrink toward zero over extended iterations.
+        - RMSProp replaces the monotonic sum with an **exponential moving average** (discount factor $\beta=0.9$), discounting distant past gradients. The effective step size stabilizes according to recent local gradient magnitudes rather than decaying indefinitely.
         """)
 
     with exp_adamw:
-        st.markdown("""
+        st.markdown(r"""
         #### AdamW (Adam with Decoupled Weight Decay)
         **Core Update Rule:**
-        $$\\theta_{t+1} = \\theta_t - \\eta \\left( \\frac{\\hat{m}_t}{\\sqrt{\\hat{v}_t} + \\epsilon} + \\lambda \\theta_t \\right) = \\theta_t (1 - \\eta \\lambda) - \\eta \\frac{\\hat{m}_t}{\\sqrt{\\hat{v}_t} + \\epsilon}$$
+        $$\theta_{t+1} = \theta_t - \eta \left( \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \epsilon} + \lambda \theta_t \right) = \theta_t (1 - \eta \lambda) - \eta \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \epsilon}$$
 
         **Decoupled Weight Decay vs. L2 Regularization in Gradient:**
-        - In standard Adam with L2 regularization, weight decay is added to the gradient: $g_t' = g_t + \\lambda \\theta_t$.
-        - When passed through Adam's adaptive denominator $\\sqrt{\\hat{v}_t}$, parameters with frequent/large gradients have their weight decay penalty divided by a large value, effectively weakening their regularization. Conversely, rare parameters receive disproportionately large penalties.
-        - **AdamW decouples weight decay completely from the gradient step**, applying proportional shrinkage directly to $\\theta_t$, restoring true weight regularization regardless of gradient variance.
+        - In standard Adam with L2 regularization, weight decay is folded directly into the gradient: $g_t' = g_t + \lambda \theta_t$.
+        - When scaled by the adaptive second-moment denominator $\sqrt{\hat{v}_t}$, parameters with large historical gradients experience reduced weight decay penalties, whereas parameters with small gradients receive disproportionately large penalties.
+        - **AdamW decouples weight decay completely from the gradient step**, applying proportional shrinkage directly to $\theta_t$, ensuring uniform parameter regularization regardless of gradient magnitude.
         """)
 
 
 # ==============================================================================
-# TAB 5: REFLECTION ANSWERS & CONCLUSION
+# TAB 5: HOW TO USE THIS TOOL
 # ==============================================================================
 with tabs[4]:
-    st.markdown("### 📖 Official Reflection Answers & Academic Conclusion")
+    st.markdown("### 📖 How to Use This Tool")
     
-    col_ref_a, col_ref_b = st.columns(2, gap="large")
+    col_h1, col_h2 = st.columns(2, gap="large")
 
-    with col_ref_a:
-        st.markdown("#### Part A Reflection Answers (Section A7)")
-        with st.expander("Q1. Strongest zig-zag on default bowl & why?", expanded=True):
-            st.write("**SGD** exhibits the most severe zig-zagging. On $L(x,y) = x^2 + 50y^2$, $\\nabla L = [2x, 100y]$. The gradient along $y$ is 50× larger than along $x$. SGD takes large steps perpendicular to the valley, bouncing violently across the steep walls while creeping slowly along $x$.")
-        
-        with st.expander("Q2. Which optimizers reduce oscillation and how?"):
-            st.write("**Momentum & NAG** reduce oscillation by averaging out high-frequency oscillating gradients along $y$ while reinforcing consistent velocity along $x$. **RMSProp, Adam, and AdamW** reduce oscillation by dividing by $\\sqrt{v_t}$, automatically damping steps in high-gradient directions.")
+    with col_h1:
+        st.markdown(r"""
+        #### Part A — 2D Optimizer Playground
+        1. **Select Loss Surface:** Choose between $L_1$ to $L_4$ to observe how Hessian conditioning ($\kappa = 10 \to 1000$) alters trajectory paths.
+        2. **Choose Optimizers:** Overlay multiple optimizers simultaneously to compare trajectories under identical conditions.
+        3. **Tune Hyperparameters:** Adjust the learning rate ($\eta$), momentum factors ($\beta$), Adam moments ($\beta_1, \beta_2$), and AdamW weight decay ($\lambda$).
+        4. **Animation Controls:** Use **Play**, **Pause**, **Step**, and **Reset** along with the speed slider to watch step-by-step optimization dynamics.
+        5. **Compare Dual Views:** Observe parameter trajectories on the 2D contour map (View 1) alongside the synchronized loss curve (View 2).
+        """)
 
-        with st.expander("Q3. Most efficient along shallow (x) direction?"):
-            st.write("**Adam and RMSProp** move most efficiently along $x$. By scaling steps inversely with gradient magnitude, they boost the effective learning rate along the flat $x$-axis while dampening the steep $y$-axis.")
-
-        with st.expander("Q4. Parameter-wise adaptive learning rates?"):
-            st.write("**AdaGrad, RMSProp, Adam, and AdamW**. You can identify them visually because their trajectories immediately bend into smooth, direct diagonal paths toward $(0,0)$ rather than following the orthogonal gradient field lines.")
-
-        with st.expander("Q5. AdaGrad vs RMSProp past ~200 iterations?"):
-            st.write("Past 200 iterations, **AdaGrad stalls** and moves excruciatingly slowly due to unbounded accumulation in $G_t$. **RMSProp maintains steady progress** to the minimum because its exponential moving average keeps the effective learning rate stable.")
-
-        with st.expander("Q6. RMSProp vs Adam visual differences?"):
-            st.write("**Adam is smoother and converges faster** than RMSProp because it incorporates both first moments (momentum velocity $m_t$) and second moments (RMSProp scale $v_t$), avoiding jittery trajectory turns.")
-
-        with st.expander("Q7. Does AdamW visibly differ from Adam on 2D bowl?"):
-            st.write("On this simple 2D unconstrained bowl with small $\\lambda=10^{-3}$, the difference is **subtle**. Both reach $(0,0)$ because the global minimum has $\\theta=0$, where $\\lambda\\theta=0$. The true advantage of AdamW emerges on complex overparameterized neural networks where generalization and weight norms matter.")
-
-        with st.expander("Q8. Increasing condition number L1 to L4 at η=0.01?"):
-            st.write("On $L_4$ ($\\kappa=1000$), **SGD and plain Momentum diverge instantly** (since $\\eta \\cdot 2000 = 20 > 2$). **AdaGrad, RMSProp, Adam, and AdamW remain stable** because their adaptive denominators rescale the 2000y gradient back into stable step bounds.")
-
-    with col_ref_b:
-        st.markdown("#### Part B Reflection Answers (Section B4)")
-        with st.expander("Q1-Q3. SGD Zig-Zag, Momentum & NAG in Neural Networks", expanded=True):
-            st.write("In neural network loss landscapes, ill-conditioned ravines are pervasive. Plain SGD displays noisy loss curves with sluggish convergence. Momentum accelerates loss reduction, and NAG provides slightly smoother transitions near plateaus.")
-
-        with st.expander("Q4-Q6. Adaptive Rates: AdaGrad to RMSProp"):
-            st.write("AdaGrad rapidly drops its effective learning rate $\\eta_{eff}$ on dense features, plateauing early. RMSProp keeps $\\eta_{eff}$ non-zero, allowing sustained learning throughout all epochs.")
-
-        with st.expander("Q7-Q10. Adam & AdamW Mechanics"):
-            st.write("Adam combines momentum $m_t$ and adaptive variance $v_t$ with bias correction for initial zero-initialization. AdamW fixes L2 regularization by applying weight decay directly to weights, avoiding the distortion caused by division by $\\sqrt{v_t}$.")
-
-        with st.expander("Q11-Q16. Empirical Results & Final Optimizer Choice"):
-            st.write("**Adam/AdamW converged fastest** with the highest test accuracy (~97-98%). For a new deep learning project, **AdamW is the top recommendation** due to its fast convergence, adaptive conditioning resilience, and superior weight regularization.")
+    with col_h2:
+        st.markdown(r"""
+        #### Part B — Real Neural Network Training
+        1. **Inspect Dataset Metrics:** Check dynamic sample counts (569 total, 30 features, train/test split) loaded from the Breast Cancer Wisconsin dataset.
+        2. **Configure Benchmark:** Select optimizers, learning rate, batch size, and epoch count.
+        3. **Start Training:** Click **🚀 Start Training** to run training from scratch using pure NumPy forward and backward passes.
+        4. **Live Dashboard:** Monitor live training/test loss, accuracy, and the **effective learning rate ($\eta_{\text{eff}}$)** for representative weight $W_1[0,0]$.
+        5. **Comparison Table:** Review auto-computed convergence epochs (first epoch reaching within 1% of final loss) and final test accuracies.
+        """)
 
     st.markdown("---")
-    st.markdown("#### 📜 Comprehensive Academic Conclusion")
     st.markdown("""
-    The progression from **SGD $\\to$ Momentum $\\to$ NAG $\\to$ AdaGrad $\\to$ RMSProp $\\to$ Adam $\\to$ AdamW** represents one of the most elegant evolutionary arcs in modern machine learning:
-    1. **SGD** established gradient descent but suffered from severe curvature sensitivity in ill-conditioned valleys.
-    2. **Momentum & NAG** introduced physics-inspired velocity and lookahead braking to navigate oscillations.
-    3. **AdaGrad** pioneered parameter-wise adaptive learning rates, identifying that rare and frequent features require different scales, but was bottlenecked by monotonic accumulation.
-    4. **RMSProp** solved this with leaky moving averages, preserving adaptability across long horizons.
-    5. **Adam** unified momentum and RMSProp with statistical bias correction to become the industry benchmark.
-    6. **AdamW** corrected a fundamental flaw in Adam's weight decay interaction, unlocking state-of-the-art generalization for Transformers and deep neural networks.
-
-    **Future Tool Improvements:**
-    With more development time, this visualizer could be extended to 3D loss surface rendering with WebGL shaders, support custom user-defined loss functions via symbolic parsing, integrate mini-batch stochastic noise simulation in 2D landscapes, and benchmark modern Transformer architectures with schedule-aware optimizers (Lion, Sophia).
-    """)
-
-
-# ==============================================================================
-# TAB 6: HOW-TO & DEMO GUIDE
-# ==============================================================================
-with tabs[5]:
-    st.markdown("### 🛠️ Lab Demonstration Script & How-To Guide")
-    st.markdown("""
-    #### ⏱️ 2–4 Minute Live Lab Demonstration Sequence (For Extra Marks)
-    
-    1. **Step 1: Introduction (30s)**
-       - Open **Tab 1: Part A**. Show the default $L_2 = x^2 + 50y^2$ bowl with starting point $(8, 8)$.
-       - Explain that gradient curvature along $y$ is 50× steeper than $x$ ($\kappa = 50$).
-    
-    2. **Step 2: Compare SGD vs Adam on 2D Bowl (45s)**
-       - Select `SGD` and `Adam`. Press **▶️ Play**.
-       - Point out how **SGD zig-zags violently** across the canyon walls while **Adam takes a direct, smooth diagonal route** straight to the global minimum $\\star (0,0)$.
-       - Show the synchronized **Loss Curve (View 2)** dropping exponentially faster for Adam.
-    
-    3. **Step 3: Conditioning Explorer & Divergence (45s)**
-       - Switch to **$L_4 = x^2 + 1000y^2$** ($\kappa = 1000$).
-       - Show that at $\eta = 0.01$, SGD immediately diverges/explodes, while adaptive optimizers (AdaGrad, RMSProp, Adam) remain rock-solid.
-    
-    4. **Step 4: Part B Neural Network Live Training (60s)**
-       - Switch to **Tab 2: Part B**.
-       - Highlight the dynamic dataset counts: **569 total samples, 30 features, 455 train, 114 test**.
-       - Select all 7 optimizers, click **🚀 Start Training**.
-       - Watch the real-time loss, accuracy, and **Effective Learning Rate ($\eta_{eff}$)** plots update epoch by epoch.
-       - Point out the **Automatic Comparison Table** and the auto-calculated **Convergence Epoch**.
-    
-    5. **Step 5: Conclusion & Q&A (30s)**
-       - Conclude with why **AdamW** is the gold standard in deep learning.
-    """)
-
-    st.markdown("---")
-    st.markdown("#### 📸 Recommended Submission Artifacts")
-    st.info("""
-    - **Screenshot 1 (Part A Convergence):** Multi-optimizer overlay on $L_2$ showing SGD zig-zag vs Adam smooth path.
-    - **Screenshot 2 (Part A Divergence):** SGD on $L_4$ showing divergence with $\kappa=1000$.
-    - **Screenshot 3 (Part B Live Dashboard):** Loss curves and Effective Learning Rate plot for $W_1[0,0]$.
-    - **Screenshot 4 (Comparison Table):** Auto-computed summary table with convergence epochs.
+    #### 📚 Optimizer Summary Reference
+    | Optimizer | Key Innovation | Typical Use Case / Behavior |
+    |---|---|---|
+    | **SGD** | Direct first-order gradient descent | Baseline; sensitive to learning rate and curvature |
+    | **Momentum** | Exponentially weighted velocity buffer | Accelerates along consistent slopes, dampens oscillation |
+    | **NAG** | Look-ahead gradient evaluation | Proactively brakes before steep ascents |
+    | **AdaGrad** | Coordinate-wise cumulative squared gradients | Adapts to parameter scale; effective rate shrinks over long horizons |
+    | **RMSProp** | Exponential moving average of squared gradients | Maintains adaptive scaling without indefinite shrinkage |
+    | **Adam** | Combines Momentum and RMSProp + bias correction | Robust across diverse deep learning architectures |
+    | **AdamW** | Decoupled weight decay regularization | Prevents regularization distortion in adaptive optimization |
     """)
