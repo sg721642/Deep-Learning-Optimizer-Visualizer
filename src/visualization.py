@@ -177,18 +177,18 @@ def create_contour_figure(
             zerolinecolor="rgba(255,255,255,0.3)",
             gridcolor="rgba(255,255,255,0.1)"
         ),
-        margin=dict(l=45, r=25, t=80, b=45),
+        margin=dict(l=45, r=25, t=95, b=45),
         legend=dict(
             orientation="h",
             yanchor="top",
-            y=0.89,
+            y=0.88,
             xanchor="center",
             x=0.5,
-            bgcolor="rgba(0,0,0,0.3)",
+            bgcolor="rgba(0,0,0,0)",
             font=dict(size=10)
         ),
         template="plotly_dark",
-        height=520
+        height=530
     )
     return fig
 
@@ -262,18 +262,18 @@ def create_loss_curve_figure(
             type="log" if log_scale else "linear",
             gridcolor="rgba(255,255,255,0.1)"
         ),
-        margin=dict(l=50, r=25, t=80, b=45),
+        margin=dict(l=50, r=25, t=95, b=45),
         legend=dict(
             orientation="h",
             yanchor="top",
-            y=0.89,
+            y=0.88,
             xanchor="center",
             x=0.5,
-            bgcolor="rgba(0,0,0,0.3)",
+            bgcolor="rgba(0,0,0,0)",
             font=dict(size=10)
         ),
         template="plotly_dark",
-        height=520
+        height=530
     )
     return fig
 
@@ -319,17 +319,17 @@ def create_nn_loss_figure(histories: Dict[str, TrainingHistory]) -> go.Figure:
         xaxis=dict(title="Epoch", gridcolor="rgba(255,255,255,0.1)"),
         yaxis=dict(title="Binary Cross-Entropy Loss", gridcolor="rgba(255,255,255,0.1)"),
         template="plotly_dark",
-        margin=dict(l=50, r=25, t=85, b=45),
+        margin=dict(l=50, r=25, t=95, b=45),
         legend=dict(
             orientation="h",
             yanchor="top",
             y=0.88,
             xanchor="center",
             x=0.5,
-            font=dict(size=9.5),
+            font=dict(size=9.0),
             bgcolor="rgba(0,0,0,0)"
         ),
-        height=410
+        height=430
     )
     return fig
 
@@ -373,17 +373,17 @@ def create_nn_accuracy_figure(histories: Dict[str, TrainingHistory]) -> go.Figur
         xaxis=dict(title="Epoch", gridcolor="rgba(255,255,255,0.1)"),
         yaxis=dict(title="Accuracy (%)", range=[40, 102], gridcolor="rgba(255,255,255,0.1)"),
         template="plotly_dark",
-        margin=dict(l=50, r=25, t=85, b=45),
+        margin=dict(l=50, r=25, t=95, b=45),
         legend=dict(
             orientation="h",
             yanchor="top",
             y=0.88,
             xanchor="center",
             x=0.5,
-            font=dict(size=9.5),
+            font=dict(size=9.0),
             bgcolor="rgba(0,0,0,0)"
         ),
-        height=410
+        height=430
     )
     return fig
 
@@ -436,7 +436,7 @@ def create_effective_lr_figure(histories: Dict[str, TrainingHistory]) -> go.Figu
             gridcolor="rgba(255,255,255,0.1)"
         ),
         template="plotly_dark",
-        margin=dict(l=50, r=25, t=85, b=45),
+        margin=dict(l=50, r=25, t=95, b=45),
         legend=dict(
             orientation="h",
             yanchor="top",
@@ -446,6 +446,6 @@ def create_effective_lr_figure(histories: Dict[str, TrainingHistory]) -> go.Figu
             font=dict(size=9.5),
             bgcolor="rgba(0,0,0,0)"
         ),
-        height=410
+        height=430
     )
     return fig
