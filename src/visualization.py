@@ -9,6 +9,12 @@ from src.optimizers import OPTIMIZER_COLORS
 from src.surfaces import LossSurface2D
 from src.experiment import TrainingHistory
 
+PLOTLY_CONFIG = {
+    "displayModeBar": True,
+    "displaylogo": False,
+    "modeBarButtonsToRemove": ["lasso2d", "select2d"]
+}
+
 
 def create_contour_figure(
     surface: LossSurface2D,
@@ -27,10 +33,33 @@ def create_contour_figure(
         - Growing connected path per optimizer
         - Current step marker
         - Distinct consistent color scheme
+        - Bounded auto-scaling / divergence handling
     """
+    # Determine sensible plotting bounds
+    base_x = max(abs(start_point[0]) + 2.0, 10.0)
+    base_y = max(abs(start_point[1]) + 2.0, 10.0)
+
+    # Check active trajectory positions up to current step
+    max_x_obs = base_x
+    max_y_obs = base_y
+    for opt_name, traj in trajectories.items():
+        if len(traj) > 0:
+            idx = min(current_step, len(traj) - 1)
+            sub = traj[:idx + 1]
+            max_x_obs = max(max_x_obs, float(np.nanmax(np.abs(sub[:, 0]))))
+            max_y_obs = max(max_y_obs, float(np.nanmax(np.abs(sub[:, 1]))))
+
+    # Bounded expansion to prevent the origin from becoming a microscopic dot
+    plot_limit_x = min(max_x_obs * 1.15, 35.0)
+    plot_limit_y = min(max_y_obs * 1.15, 35.0)
+    plot_limit = max(plot_limit_x, plot_limit_y, 10.0)
+
+    eff_x_range = (-plot_limit, plot_limit)
+    eff_y_range = (-plot_limit, plot_limit)
+
     # Create coordinate grid
-    x_vals = np.linspace(x_range[0], x_range[1], grid_res)
-    y_vals = np.linspace(y_range[0], y_range[1], grid_res)
+    x_vals = np.linspace(eff_x_range[0], eff_x_range[1], grid_res)
+    y_vals = np.linspace(eff_y_range[0], eff_y_range[1], grid_res)
     X, Y = np.meshgrid(x_vals, y_vals)
     Z = surface.loss(X, Y)
 
@@ -88,10 +117,13 @@ def create_contour_figure(
         idx = min(current_step, len(traj) - 1)
         sub_traj = traj[:idx + 1]
 
-        # Growing trajectory line
+        # Growing trajectory line (clamped to plot range for drawing stability)
+        clamped_x = np.clip(sub_traj[:, 0], -plot_limit * 1.5, plot_limit * 1.5)
+        clamped_y = np.clip(sub_traj[:, 1], -plot_limit * 1.5, plot_limit * 1.5)
+
         fig.add_trace(go.Scatter(
-            x=sub_traj[:, 0],
-            y=sub_traj[:, 1],
+            x=clamped_x,
+            y=clamped_y,
             mode="lines",
             line=dict(color=color, width=2.8),
             name=f"{opt_name}",
@@ -101,15 +133,24 @@ def create_contour_figure(
 
         # Current position marker
         curr_x, curr_y = sub_traj[-1, 0], sub_traj[-1, 1]
+        is_diverged = abs(curr_x) > plot_limit or abs(curr_y) > plot_limit
+        display_x = np.clip(curr_x, -plot_limit * 0.96, plot_limit * 0.96)
+        display_y = np.clip(curr_y, -plot_limit * 0.96, plot_limit * 0.96)
+
+        marker_sym = "triangle-up" if is_diverged else "circle"
+        hover_label = f"{opt_name}<br>Step {idx}<br>x={curr_x:.3f}, y={curr_y:.3f}<br>Loss={surface.loss(curr_x, curr_y):.4e}"
+        if is_diverged:
+            hover_label += "<br><b>[Diverged out of bounds]</b>"
+
         fig.add_trace(go.Scatter(
-            x=[curr_x],
-            y=[curr_y],
+            x=[display_x],
+            y=[display_y],
             mode="markers",
-            marker=dict(size=9, color=color, symbol="circle", line=dict(color="#FFFFFF", width=1.5)),
+            marker=dict(size=10, color=color, symbol=marker_sym, line=dict(color="#FFFFFF", width=1.5)),
             name=f"{opt_name} (Current)",
             legendgroup=opt_name,
             showlegend=False,
-            hovertext=f"{opt_name}<br>Step {idx}<br>x={curr_x:.3f}, y={curr_y:.3f}<br>Loss={surface.loss(curr_x, curr_y):.4f}",
+            hovertext=hover_label,
             hoverinfo="text"
         ))
 
@@ -124,14 +165,14 @@ def create_contour_figure(
         ),
         xaxis=dict(
             title="Parameter x (Shallow Axis)",
-            range=list(x_range),
+            range=list(eff_x_range),
             zeroline=True,
             zerolinecolor="rgba(255,255,255,0.3)",
             gridcolor="rgba(255,255,255,0.1)"
         ),
         yaxis=dict(
             title="Parameter y (Steep Axis)",
-            range=list(y_range),
+            range=list(eff_y_range),
             zeroline=True,
             zerolinecolor="rgba(255,255,255,0.3)",
             gridcolor="rgba(255,255,255,0.1)"
@@ -353,21 +394,31 @@ def create_effective_lr_figure(histories: Dict[str, TrainingHistory]) -> go.Figu
     for AdaGrad, RMSProp, Adam, AdamW per PDF Section B2.
     """
     fig = go.Figure()
-    adaptive_opts = ["AdaGrad", "RMSProp", "Adam", "AdamW", "SGD", "Momentum", "NAG"]
+    adaptive_opts = ["AdaGrad", "RMSProp", "Adam", "AdamW"]
+    has_adaptive = False
 
     for opt_name, hist in histories.items():
-        if not hist.epochs or opt_name not in adaptive_opts:
-            continue
-        color = OPTIMIZER_COLORS.get(opt_name, "#FFFFFF")
+        if opt_name in adaptive_opts and hist.epochs:
+            has_adaptive = True
+            color = OPTIMIZER_COLORS.get(opt_name, "#FFFFFF")
 
-        fig.add_trace(go.Scatter(
-            x=hist.epochs,
-            y=hist.effective_lrs,
-            mode="lines",
-            line=dict(color=color, width=2.4),
-            name=f"{opt_name} (η_eff)",
-            legendgroup=opt_name
-        ))
+            fig.add_trace(go.Scatter(
+                x=hist.epochs,
+                y=hist.effective_lrs,
+                mode="lines",
+                line=dict(color=color, width=2.4),
+                name=f"{opt_name} (η_eff)",
+                legendgroup=opt_name
+            ))
+
+    if not has_adaptive:
+        fig.add_annotation(
+            text="Effective learning rate is shown for adaptive optimizers<br>(AdaGrad, RMSProp, Adam, AdamW).",
+            xref="paper", yref="paper",
+            x=0.5, y=0.5,
+            showarrow=False,
+            font=dict(size=12, color="#8B949E")
+        )
 
     fig.update_layout(
         title=dict(
@@ -379,7 +430,11 @@ def create_effective_lr_figure(histories: Dict[str, TrainingHistory]) -> go.Figu
             font=dict(size=13)
         ),
         xaxis=dict(title="Epoch", gridcolor="rgba(255,255,255,0.1)"),
-        yaxis=dict(title="Effective Step Size (η / √(v̂ₜ + ε))", type="log", gridcolor="rgba(255,255,255,0.1)"),
+        yaxis=dict(
+            title="Effective Step Size (η / √(v̂ₜ + ε))",
+            type="log" if has_adaptive else "linear",
+            gridcolor="rgba(255,255,255,0.1)"
+        ),
         template="plotly_dark",
         margin=dict(l=50, r=25, t=85, b=45),
         legend=dict(

@@ -30,17 +30,19 @@ from src.visualization import (
     create_loss_curve_figure,
     create_nn_loss_figure,
     create_nn_accuracy_figure,
-    create_effective_lr_figure
+    create_effective_lr_figure,
+    PLOTLY_CONFIG
 )
 
-# Page configuration
+# Page Configuration
 st.set_page_config(
-    page_title="Optimizer Visualizer",
+    page_title="Deep Learning Optimizer Visualizer",
+    page_icon="⚡",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
-# Clean CSS styling for readable typography and layout
+# Custom Styling for Academic Presentation & High Contrast
 st.markdown("""
 <style>
     .main-title {
@@ -48,23 +50,31 @@ st.markdown("""
         font-weight: 700;
         letter-spacing: -0.5px;
         margin-bottom: 0.2rem;
-        color: #F8F9FA;
+        color: var(--text-color, #1F2328);
     }
     .sub-title {
         font-size: 1.0rem;
-        color: #ADB5BD;
+        color: var(--text-color-secondary, #57606A);
         margin-bottom: 1.2rem;
     }
+    @media (prefers-color-scheme: light) {
+        .main-title { color: #1F2328 !important; }
+        .sub-title { color: #57606A !important; }
+    }
+    @media (prefers-color-scheme: dark) {
+        .main-title { color: #F0F6FC !important; }
+        .sub-title { color: #8B949E !important; }
+    }
     .metric-card {
-        background-color: #1E222A;
-        border: 1px solid #2D333B;
+        background-color: rgba(127, 127, 127, 0.08);
+        border: 1px solid rgba(127, 127, 127, 0.2);
         border-radius: 8px;
         padding: 12px 14px;
         text-align: center;
     }
     .metric-title {
         font-size: 0.8rem;
-        color: #8B949E;
+        color: var(--text-color-secondary, #8B949E);
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
@@ -327,7 +337,7 @@ with tabs[0]:
                 x_range=(-max(abs(x0) + 2, 10), max(abs(x0) + 2, 10)),
                 y_range=(-max(abs(y0) + 2, 10), max(abs(y0) + 2, 10))
             )
-            st.plotly_chart(fig_contour, use_container_width=True, key="fig_contour_chart")
+            st.plotly_chart(fig_contour, use_container_width=True, key="fig_contour_chart", config=PLOTLY_CONFIG)
 
         with v2_col:
             fig_loss = create_loss_curve_figure(
@@ -335,7 +345,7 @@ with tabs[0]:
                 current_step=current_step,
                 log_scale=True
             )
-            st.plotly_chart(fig_loss, use_container_width=True, key="fig_loss_chart")
+            st.plotly_chart(fig_loss, use_container_width=True, key="fig_loss_chart", config=PLOTLY_CONFIG)
 
         # Step Status Metrics
         st.markdown(f"##### Current Optimizer Position & Loss (Iteration {current_step}/{max_valid_step})")
@@ -493,9 +503,9 @@ with tabs[1]:
                             status_text.text(f"Training {current_opt_name}... Epoch {ep}/{nn_epochs}")
                             
                             if ep % 2 == 0 or ep == nn_epochs:
-                                plot_loss_holder.plotly_chart(create_nn_loss_figure(histories), use_container_width=True)
-                                plot_acc_holder.plotly_chart(create_nn_accuracy_figure(histories), use_container_width=True)
-                                plot_eff_lr_holder.plotly_chart(create_effective_lr_figure(histories), use_container_width=True)
+                                plot_loss_holder.plotly_chart(create_nn_loss_figure(histories), use_container_width=True, key=f"nn_loss_live_{current_opt_name}_{ep}", config=PLOTLY_CONFIG)
+                                plot_acc_holder.plotly_chart(create_nn_accuracy_figure(histories), use_container_width=True, key=f"nn_acc_live_{current_opt_name}_{ep}", config=PLOTLY_CONFIG)
+                                plot_eff_lr_holder.plotly_chart(create_effective_lr_figure(histories), use_container_width=True, key=f"nn_lr_live_{current_opt_name}_{ep}", config=PLOTLY_CONFIG)
                         return cb
 
                     hist = engine.train_single_optimizer(
@@ -512,9 +522,9 @@ with tabs[1]:
                 status_text.success("Training completed successfully.")
         elif st.session_state.nn_histories:
             h = st.session_state.nn_histories
-            plot_loss_holder.plotly_chart(create_nn_loss_figure(h), use_container_width=True)
-            plot_acc_holder.plotly_chart(create_nn_accuracy_figure(h), use_container_width=True)
-            plot_eff_lr_holder.plotly_chart(create_effective_lr_figure(h), use_container_width=True)
+            plot_loss_holder.plotly_chart(create_nn_loss_figure(h), use_container_width=True, key="nn_loss_static", config=PLOTLY_CONFIG)
+            plot_acc_holder.plotly_chart(create_nn_accuracy_figure(h), use_container_width=True, key="nn_acc_static", config=PLOTLY_CONFIG)
+            plot_eff_lr_holder.plotly_chart(create_effective_lr_figure(h), use_container_width=True, key="nn_eff_lr_static", config=PLOTLY_CONFIG)
         else:
             st.info("Click 'Start Training' above to run the neural network training benchmark.")
 
@@ -581,7 +591,7 @@ with tabs[2]:
                 bgcolor="rgba(0,0,0,0)"
             )
         )
-        st.plotly_chart(fig_cond, use_container_width=True, key="fig_cond_chart")
+        st.plotly_chart(fig_cond, use_container_width=True, key="fig_cond_chart", config=PLOTLY_CONFIG)
 
         st.caption("On $L_4$, SGD shows larger vertical oscillations because the gradient magnitude along y is substantially larger than along x.")
 
@@ -638,7 +648,7 @@ with tabs[2]:
                 bgcolor="rgba(0,0,0,0)"
             )
         )
-        st.plotly_chart(fig_sens, use_container_width=True, key="fig_sens_chart")
+        st.plotly_chart(fig_sens, use_container_width=True, key="fig_sens_chart", config=PLOTLY_CONFIG)
         st.caption("At η = 0.1 on the default bowl (where maximum Hessian eigenvalue is 100), constant-step gradient descent exceeds the stability bound (η > 2/λ_max = 0.02).")
 
 

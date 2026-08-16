@@ -54,9 +54,10 @@ def test_nag_lookahead():
     grads = np.array([1.0, 2.0])
     new_params = opt.step(params, grads)
     # Now v is [0.1, 0.2]
-    # Lookahead from new_params: new_params - 0.9 * [0.1, 0.2]
+    # Lookahead from new_params: new_params - lr * beta * v_prev = new_params - 0.1 * 0.9 * [0.1, 0.2]
     la_2 = opt.get_lookahead_params(new_params)
-    np.testing.assert_allclose(la_2, new_params - 0.9 * np.array([0.1, 0.2]))
+    expected_la = new_params - 0.1 * 0.9 * np.array([0.1, 0.2])
+    np.testing.assert_allclose(la_2, expected_la)
 
 
 def test_adagrad_step():
@@ -76,8 +77,6 @@ def test_rmsprop_step():
     params = np.array([2.0, -3.0])
     grads = np.array([2.0, 4.0])
     # v_1 = 0.9*0 + 0.1 * [4, 16] = [0.4, 1.6]
-    # sqrt(v_1) = [0.6324555, 1.264911]
-    # delta = 0.1 * [2, 4] / sqrt(v_1) = 0.1 * [3.162277, 3.162277] = [0.3162277, 0.3162277]
     new_params = opt.step(params, grads)
     expected_delta = 0.1 * grads / np.sqrt(0.1 * (grads ** 2) + 1e-8)
     np.testing.assert_allclose(new_params, params - expected_delta, rtol=1e-5)
@@ -93,7 +92,6 @@ def test_adam_step():
     v1 = 0.001 * (grads ** 2)
     m_hat = m1 / (1.0 - 0.9)  # = grads
     v_hat = v1 / (1.0 - 0.999)  # = grads ** 2
-    # step = 0.01 * grads / (abs(grads) + 1e-8) = 0.01 * sign(grads)
     expected = params - 0.01 * np.sign(grads)
     np.testing.assert_allclose(new_params, expected, rtol=1e-4)
 
@@ -146,3 +144,18 @@ def test_invalid_hyperparameters():
         Adam(lr=0.01, beta1=-0.1)
     with pytest.raises(ValueError):
         AdamW(lr=0.01, weight_decay=-0.1)
+
+
+def test_effective_learning_rate_computation():
+    """Verify effective learning rate formulas for adaptive optimizers."""
+    grads = np.array([2.0, 4.0])
+    
+    adagrad = AdaGrad(lr=0.01, eps=1e-8)
+    adagrad.step(np.array([1.0, 1.0]), grads)
+    expected_adagrad_eff = 0.01 / np.sqrt(grads[0]**2 + 1e-8)
+    np.testing.assert_allclose(adagrad.get_effective_lr(index=(0,)), expected_adagrad_eff, rtol=1e-4)
+
+    rmsprop = RMSProp(lr=0.01, beta=0.9, eps=1e-8)
+    rmsprop.step(np.array([1.0, 1.0]), grads)
+    expected_rms_eff = 0.01 / np.sqrt(0.1 * (grads[0]**2) + 1e-8)
+    np.testing.assert_allclose(rmsprop.get_effective_lr(index=(0,)), expected_rms_eff, rtol=1e-4)

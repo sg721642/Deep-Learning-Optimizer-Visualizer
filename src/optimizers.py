@@ -176,13 +176,13 @@ class NAG(BaseOptimizer):
         self.v = {}
 
     def get_lookahead_params(self, params: Union[np.ndarray, Dict[str, np.ndarray]]) -> Union[np.ndarray, Dict[str, np.ndarray]]:
-        """Lookahead: θ - β * v_{t-1} (scaled by learning rate step direction)."""
+        """Lookahead position: θ_lookahead = θ_t - η * β * v_{t-1}."""
         is_dict = isinstance(params, dict)
         p_dict = params if is_dict else {"param": params}
         lookahead = {}
         for k, p in p_dict.items():
             v_prev = self.v.get(k, np.zeros_like(p))
-            lookahead[k] = p - self.beta * v_prev
+            lookahead[k] = p - self.lr * self.beta * v_prev
         return lookahead if is_dict else lookahead["param"]
 
     def step(
