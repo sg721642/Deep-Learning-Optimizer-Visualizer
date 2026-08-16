@@ -159,10 +159,18 @@ class Momentum(BaseOptimizer):
 class NAG(BaseOptimizer):
     """
     3. Nesterov Accelerated Gradient (NAG)
-    Update Rule (per PDF spec):
-        Evaluate gradient at lookahead position: θ_lookahead = θ_t - β * v_{t-1}
-        v_t = β * v_{t-1} + (1 - β) * g_{lookahead}
+    Update Rule (per PDF spec & dimensional analysis):
+        θ_lookahead = θ_t - η * β * v_{t-1}
+        v_t = β * v_{t-1} + (1 - β) * ∇L(θ_lookahead)
         θ_{t+1} = θ_t - η * v_t
+
+    Note on PDF notation vs Dimensional Consistency:
+    The PDF lists the lookahead as `θ_t - β * v_{t-1}` while defining velocity as an EMA
+    of gradients `v_t = β * v_{t-1} + (1-β) * g_t` and updating `θ_{t+1} = θ_t - η * v_t`.
+    Because `v` has physical dimensions of a gradient ([L]/[θ]) while θ has dimensions of
+    parameter coordinates ([θ]), stepping in parameter space requires the step-size factor `η`:
+    `θ_lookahead = θ_t - η * β * v_{t-1}`. Without `η`, subtracting gradient-scale quantities
+    directly from coordinates creates a 100x unscaled step that causes immediate divergence.
     """
     def __init__(self, lr: float = 0.01, beta: float = 0.9):
         super().__init__(lr=lr, name="NAG")
@@ -176,7 +184,7 @@ class NAG(BaseOptimizer):
         self.v = {}
 
     def get_lookahead_params(self, params: Union[np.ndarray, Dict[str, np.ndarray]]) -> Union[np.ndarray, Dict[str, np.ndarray]]:
-        """Lookahead position: θ_lookahead = θ_t - η * β * v_{t-1}."""
+        """Lookahead position in parameter space: θ_lookahead = θ_t - η * β * v_{t-1}."""
         is_dict = isinstance(params, dict)
         p_dict = params if is_dict else {"param": params}
         lookahead = {}
