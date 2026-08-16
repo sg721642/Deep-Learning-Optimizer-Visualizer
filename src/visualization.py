@@ -1,0 +1,351 @@
+"""
+From SGD to AdamW — Deep Learning Optimizer Visualizer
+Visualization utilities for synchronized 2D contour maps, loss curves, and neural network dashboards.
+"""
+from typing import Dict, List, Tuple, Optional
+import numpy as np
+import plotly.graph_objects as go
+from src.optimizers import OPTIMIZER_COLORS
+from src.surfaces import LossSurface2D
+from src.experiment import TrainingHistory
+
+
+def create_contour_figure(
+    surface: LossSurface2D,
+    trajectories: Dict[str, np.ndarray],
+    current_step: int,
+    start_point: Tuple[float, float] = (8.0, 8.0),
+    x_range: Tuple[float, float] = (-10.0, 10.0),
+    y_range: Tuple[float, float] = (-10.0, 10.0),
+    grid_res: int = 120
+) -> go.Figure:
+    """
+    Generate interactive Plotly contour map with animated optimizer trajectories.
+    View 1 per PDF spec:
+        - Filled contour plot of selected loss surface
+        - Global minimum marked with ★ at (0, 0)
+        - Growing connected path per optimizer
+        - Current step marker
+        - Distinct consistent color scheme
+    """
+    # Create coordinate grid
+    x_vals = np.linspace(x_range[0], x_range[1], grid_res)
+    y_vals = np.linspace(y_range[0], y_range[1], grid_res)
+    X, Y = np.meshgrid(x_vals, y_vals)
+    Z = surface.loss(X, Y)
+
+    fig = go.Figure()
+
+    # Base filled contour layer
+    fig.add_trace(go.Contour(
+        x=x_vals,
+        y=y_vals,
+        z=Z,
+        colorscale="Viridis",
+        contours=dict(
+            coloring="heatmap",
+            showlines=True,
+        ),
+        line=dict(width=0.5, color="rgba(255, 255, 255, 0.4)"),
+        opacity=0.85,
+        hoverinfo="x+y+z",
+        showscale=False,
+        name="Loss Surface"
+    ))
+
+    # Mark Global Minimum at (0, 0)
+    fig.add_trace(go.Scatter(
+        x=[0.0],
+        y=[0.0],
+        mode="markers+text",
+        marker=dict(size=16, color="#FFD700", symbol="star", line=dict(color="#000", width=1.5)),
+        text=["Global Min ★ (0,0)"],
+        textposition="bottom right",
+        textfont=dict(color="#FFFFFF", size=11, family="sans-serif"),
+        name="Global Minimum ★",
+        showlegend=True
+    ))
+
+    # Mark Starting Point
+    fig.add_trace(go.Scatter(
+        x=[start_point[0]],
+        y=[start_point[1]],
+        mode="markers+text",
+        marker=dict(size=12, color="#FFFFFF", symbol="circle-open", line=dict(color="#FFFFFF", width=2.5)),
+        text=["Start (x₀,y₀)"],
+        textposition="top right",
+        textfont=dict(color="#FFFFFF", size=10),
+        name="Start Point",
+        showlegend=False
+    ))
+
+    # Plot each optimizer's trajectory up to current_step
+    for opt_name, traj in trajectories.items():
+        if len(traj) == 0:
+            continue
+        
+        color = OPTIMIZER_COLORS.get(opt_name, "#FFFFFF")
+        idx = min(current_step, len(traj) - 1)
+        sub_traj = traj[:idx + 1]
+
+        # Growing trajectory line
+        fig.add_trace(go.Scatter(
+            x=sub_traj[:, 0],
+            y=sub_traj[:, 1],
+            mode="lines",
+            line=dict(color=color, width=3),
+            name=f"{opt_name}",
+            legendgroup=opt_name,
+            showlegend=True
+        ))
+
+        # Current position marker
+        curr_x, curr_y = sub_traj[-1, 0], sub_traj[-1, 1]
+        fig.add_trace(go.Scatter(
+            x=[curr_x],
+            y=[curr_y],
+            mode="markers",
+            marker=dict(size=10, color=color, symbol="circle", line=dict(color="#FFFFFF", width=1.5)),
+            name=f"{opt_name} (Current)",
+            legendgroup=opt_name,
+            showlegend=False,
+            hovertext=f"{opt_name}<br>Step {idx}<br>x={curr_x:.3f}, y={curr_y:.3f}<br>Loss={surface.loss(curr_x, curr_y):.4f}",
+            hoverinfo="text"
+        ))
+
+    fig.update_layout(
+        title=dict(
+            text=f"<b>View 1: Parameter Trajectories on {surface.formula_str}</b> (Condition № κ={surface.condition_number:.0f})",
+            x=0.5,
+            xanchor="center",
+            font=dict(size=14)
+        ),
+        xaxis=dict(
+            title="Parameter x (Shallow Axis)",
+            range=list(x_range),
+            zeroline=True,
+            zerolinecolor="rgba(255,255,255,0.3)",
+            gridcolor="rgba(255,255,255,0.1)"
+        ),
+        yaxis=dict(
+            title="Parameter y (Steep Axis)",
+            range=list(y_range),
+            zeroline=True,
+            zerolinecolor="rgba(255,255,255,0.3)",
+            gridcolor="rgba(255,255,255,0.1)"
+        ),
+        margin=dict(l=40, r=20, t=50, b=40),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="center",
+            x=0.5,
+            bgcolor="rgba(0,0,0,0.5)",
+            font=dict(size=10)
+        ),
+        template="plotly_dark",
+        height=520
+    )
+    return fig
+
+
+def create_loss_curve_figure(
+    losses_dict: Dict[str, np.ndarray],
+    current_step: int,
+    log_scale: bool = True
+) -> go.Figure:
+    """
+    Generate interactive Plotly loss curve figure synchronized with View 1.
+    View 2 per PDF spec:
+        - L(θ_t) vs iteration t
+        - Updating in lock-step with View 1
+        - Shared color palette
+    """
+    fig = go.Figure()
+
+    max_len = 1
+    for opt_name, losses in losses_dict.items():
+        if len(losses) == 0:
+            continue
+        max_len = max(max_len, len(losses))
+        color = OPTIMIZER_COLORS.get(opt_name, "#FFFFFF")
+        idx = min(current_step, len(losses) - 1)
+        sub_losses = losses[:idx + 1]
+        iterations = list(range(len(sub_losses)))
+
+        # Trace for loss history
+        fig.add_trace(go.Scatter(
+            x=iterations,
+            y=sub_losses,
+            mode="lines",
+            line=dict(color=color, width=2.5),
+            name=opt_name,
+            legendgroup=opt_name,
+            showlegend=True
+        ))
+
+        # Marker at current step
+        if len(sub_losses) > 0:
+            curr_loss = sub_losses[-1]
+            fig.add_trace(go.Scatter(
+                x=[idx],
+                y=[curr_loss],
+                mode="markers",
+                marker=dict(size=9, color=color, symbol="circle", line=dict(color="#FFFFFF", width=1.5)),
+                name=f"{opt_name} Current",
+                legendgroup=opt_name,
+                showlegend=False,
+                hovertext=f"{opt_name}<br>Step {idx}<br>Loss: {curr_loss:.6f}",
+                hoverinfo="text"
+            ))
+
+    fig.update_layout(
+        title=dict(
+            text=f"<b>View 2: Loss Curve L(θₜ) vs. Iteration t</b> (Step {current_step})",
+            x=0.5,
+            xanchor="center",
+            font=dict(size=14)
+        ),
+        xaxis=dict(
+            title="Iteration t",
+            range=[0, max(max_len, 50)],
+            gridcolor="rgba(255,255,255,0.1)"
+        ),
+        yaxis=dict(
+            title="Loss L(θₜ)" + (" (Log Scale)" if log_scale else ""),
+            type="log" if log_scale else "linear",
+            gridcolor="rgba(255,255,255,0.1)"
+        ),
+        margin=dict(l=40, r=20, t=50, b=40),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="center",
+            x=0.5,
+            bgcolor="rgba(0,0,0,0.5)",
+            font=dict(size=10)
+        ),
+        template="plotly_dark",
+        height=520
+    )
+    return fig
+
+
+def create_nn_loss_figure(histories: Dict[str, TrainingHistory]) -> go.Figure:
+    """Create training and validation loss curves for Part B live dashboard."""
+    fig = go.Figure()
+
+    for opt_name, hist in histories.items():
+        if not hist.epochs:
+            continue
+        color = OPTIMIZER_COLORS.get(opt_name, "#FFFFFF")
+        
+        # Train Loss (Solid line)
+        fig.add_trace(go.Scatter(
+            x=hist.epochs,
+            y=hist.train_losses,
+            mode="lines",
+            line=dict(color=color, width=2.5),
+            name=f"{opt_name} (Train)",
+            legendgroup=opt_name
+        ))
+
+        # Test Loss (Dashed line)
+        fig.add_trace(go.Scatter(
+            x=hist.epochs,
+            y=hist.test_losses,
+            mode="lines",
+            line=dict(color=color, width=2, dash="dash"),
+            name=f"{opt_name} (Test/Val)",
+            legendgroup=opt_name
+        ))
+
+    fig.update_layout(
+        title=dict(text="<b>Training & Test Loss vs. Epoch</b>", x=0.5, xanchor="center"),
+        xaxis=dict(title="Epoch", gridcolor="rgba(255,255,255,0.1)"),
+        yaxis=dict(title="Binary Cross-Entropy Loss", gridcolor="rgba(255,255,255,0.1)"),
+        template="plotly_dark",
+        margin=dict(l=40, r=20, t=40, b=40),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5, font=dict(size=9)),
+        height=380
+    )
+    return fig
+
+
+def create_nn_accuracy_figure(histories: Dict[str, TrainingHistory]) -> go.Figure:
+    """Create training and test accuracy curves for Part B live dashboard."""
+    fig = go.Figure()
+
+    for opt_name, hist in histories.items():
+        if not hist.epochs:
+            continue
+        color = OPTIMIZER_COLORS.get(opt_name, "#FFFFFF")
+
+        fig.add_trace(go.Scatter(
+            x=hist.epochs,
+            y=[acc * 100 for acc in hist.train_accuracies],
+            mode="lines",
+            line=dict(color=color, width=2.5),
+            name=f"{opt_name} (Train)",
+            legendgroup=opt_name
+        ))
+
+        fig.add_trace(go.Scatter(
+            x=hist.epochs,
+            y=[acc * 100 for acc in hist.test_accuracies],
+            mode="lines",
+            line=dict(color=color, width=2, dash="dash"),
+            name=f"{opt_name} (Test)",
+            legendgroup=opt_name
+        ))
+
+    fig.update_layout(
+        title=dict(text="<b>Classification Accuracy (%) vs. Epoch</b>", x=0.5, xanchor="center"),
+        xaxis=dict(title="Epoch", gridcolor="rgba(255,255,255,0.1)"),
+        yaxis=dict(title="Accuracy (%)", range=[40, 102], gridcolor="rgba(255,255,255,0.1)"),
+        template="plotly_dark",
+        margin=dict(l=40, r=20, t=40, b=40),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5, font=dict(size=9)),
+        height=380
+    )
+    return fig
+
+
+def create_effective_lr_figure(histories: Dict[str, TrainingHistory]) -> go.Figure:
+    """
+    Live Effective Learning Rate readout for one representative weight (W1[0,0])
+    for AdaGrad, RMSProp, Adam, AdamW per PDF Section B2.
+    """
+    fig = go.Figure()
+    adaptive_opts = ["AdaGrad", "RMSProp", "Adam", "AdamW", "SGD", "Momentum", "NAG"]
+
+    for opt_name, hist in histories.items():
+        if not hist.epochs or opt_name not in adaptive_opts:
+            continue
+        color = OPTIMIZER_COLORS.get(opt_name, "#FFFFFF")
+
+        fig.add_trace(go.Scatter(
+            x=hist.epochs,
+            y=hist.effective_lrs,
+            mode="lines",
+            line=dict(color=color, width=2.5),
+            name=f"{opt_name} (η_eff)",
+            legendgroup=opt_name
+        ))
+
+    fig.update_layout(
+        title=dict(
+            text="<b>Effective Learning Rate (η_eff) for Representative Weight W₁[0,0] vs. Epoch</b>",
+            x=0.5,
+            xanchor="center"
+        ),
+        xaxis=dict(title="Epoch", gridcolor="rgba(255,255,255,0.1)"),
+        yaxis=dict(title="Effective Learning Rate (η / √(v̂ₜ + ε))", type="log", gridcolor="rgba(255,255,255,0.1)"),
+        template="plotly_dark",
+        margin=dict(l=40, r=20, t=40, b=40),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5, font=dict(size=10)),
+        height=380
+    )
+    return fig
