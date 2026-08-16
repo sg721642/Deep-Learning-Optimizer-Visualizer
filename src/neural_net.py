@@ -108,16 +108,20 @@ class BinaryMLP:
         Binary Cross-Entropy Loss:
         L = - 1/N sum [ y * ln(y_pred + eps) + (1 - y) * ln(1 - y_pred + eps) ]
         """
-        N = y_true.shape[0]
-        y_clipped = np.clip(y_pred, eps, 1.0 - eps)
-        bce = - (1.0 / N) * np.sum(y_true * np.log(y_clipped) + (1.0 - y_true) * np.log(1.0 - y_clipped))
+        y_t = np.asarray(y_true, dtype=np.float64).reshape(-1, 1)
+        y_p = np.asarray(y_pred, dtype=np.float64).reshape(-1, 1)
+        N = y_t.shape[0]
+        y_clipped = np.clip(y_p, eps, 1.0 - eps)
+        bce = - (1.0 / N) * np.sum(y_t * np.log(y_clipped) + (1.0 - y_t) * np.log(1.0 - y_clipped))
         return float(bce)
 
     @staticmethod
     def compute_accuracy(y_true: np.ndarray, y_pred: np.ndarray) -> float:
         """Binary classification accuracy."""
-        preds = (y_pred >= 0.5).astype(np.float64)
-        return float(np.mean(preds == y_true))
+        y_t = np.asarray(y_true, dtype=np.float64).reshape(-1, 1)
+        y_p = np.asarray(y_pred, dtype=np.float64).reshape(-1, 1)
+        preds = (y_p >= 0.5).astype(np.float64)
+        return float(np.mean(preds == y_t))
 
     def backward(
         self,
@@ -130,7 +134,8 @@ class BinaryMLP:
         Computes exact gradients dL/dW and dL/db for all 3 layers.
         """
         p = params if params is not None else self.params
-        N = float(y_true.shape[0])
+        y_t = np.asarray(y_true, dtype=np.float64).reshape(-1, 1)
+        N = float(y_t.shape[0])
 
         X = cache["X"]
         Z1, A1 = cache["Z1"], cache["A1"]
@@ -138,7 +143,7 @@ class BinaryMLP:
         A3 = cache["A3"]
 
         # Output error derivative for BCE with Sigmoid: dL/dZ3 = (A3 - Y) / N
-        dZ3 = (A3 - y_true) / N
+        dZ3 = (A3 - y_t) / N
         dW3 = np.dot(A2.T, dZ3)
         db3 = np.sum(dZ3, axis=0, keepdims=True)
 
