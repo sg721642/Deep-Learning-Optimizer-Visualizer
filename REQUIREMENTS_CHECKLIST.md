@@ -70,7 +70,7 @@
 | S2 | Sensible default values loaded; app never crashes on initial launch | [x] COMPLETE | Default parameters preloaded; verified zero crash on start |
 | S3 | Robust input validation: guard against $\eta \le 0$, negative batch size/epochs, invalid inputs | [x] COMPLETE | Handled in constructor validation and UI guards |
 | S4 | Visual consistency: consistent color mapping per optimizer across all 2D and NN plots, clear titles, axes, legends | [x] COMPLETE | Uniform `OPTIMIZER_COLORS` palette across all Plotly figures |
-| S5 | In-app "How to Use This Tool" documentation guide & quick start | [x] COMPLETE | In-app guide in Tab 6 of `app.py` |
+| S5 | In-app "How to Use This Tool" documentation guide & quick start | [x] COMPLETE | In-app guide in Tab 5 of `app.py` |
 
 ---
 

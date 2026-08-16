@@ -35,24 +35,23 @@ from src.visualization import (
 
 # Page configuration
 st.set_page_config(
-    page_title="Deep Learning Optimizer Visualizer",
-    page_icon="⚡",
+    page_title="Optimizer Visualizer",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS styling for premium look & typography
+# Clean CSS styling for readable typography and layout
 st.markdown("""
 <style>
     .main-title {
-        font-size: 2.2rem;
+        font-size: 2.1rem;
         font-weight: 700;
         letter-spacing: -0.5px;
         margin-bottom: 0.2rem;
         color: #F8F9FA;
     }
     .sub-title {
-        font-size: 1.05rem;
+        font-size: 1.0rem;
         color: #ADB5BD;
         margin-bottom: 1.2rem;
     }
@@ -60,33 +59,26 @@ st.markdown("""
         background-color: #1E222A;
         border: 1px solid #2D333B;
         border-radius: 8px;
-        padding: 12px 16px;
+        padding: 12px 14px;
         text-align: center;
     }
     .metric-title {
-        font-size: 0.85rem;
+        font-size: 0.8rem;
         color: #8B949E;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
     .metric-value {
-        font-size: 1.6rem;
+        font-size: 1.5rem;
         font-weight: 600;
         color: #58A6FF;
     }
-    .info-box {
-        background-color: #161B22;
-        border-left: 4px solid #58A6FF;
-        padding: 12px 16px;
-        border-radius: 0 6px 6px 0;
-        margin-bottom: 12px;
-    }
     .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
+        gap: 6px;
     }
     .stTabs [data-baseweb="tab"] {
-        padding-top: 10px;
-        padding-bottom: 10px;
+        padding-top: 8px;
+        padding-bottom: 8px;
         font-weight: 600;
     }
 </style>
@@ -107,17 +99,17 @@ if "nn_is_training" not in st.session_state:
 
 
 # Title & Header
-st.markdown("<div class='main-title'>⚡ From SGD to AdamW — Optimizer Visualizer</div>", unsafe_allow_html=True)
-st.markdown("<div class='sub-title'>An Interactive Visual Tool to See How Optimizers Learn from First Principles (Pure NumPy)</div>", unsafe_allow_html=True)
+st.markdown("<div class='main-title'>Optimizer Visualizer</div>", unsafe_allow_html=True)
+st.markdown("<div class='sub-title'>Explore how SGD, Momentum, NAG, AdaGrad, RMSProp, Adam, and AdamW behave during optimization.</div>", unsafe_allow_html=True)
 
 
 # Main Tabs Navigation
 tabs = st.tabs([
-    "🎯 Part A: 2D Optimizer Playground",
-    "🧠 Part B: Real Neural Network Training",
-    "🔬 Conditioning & LR Sensitivity Explorers",
-    "💡 Explain-As-You-Go",
-    "📖 How to Use This Tool"
+    "Part A — 2D Playground",
+    "Part B — Neural Network",
+    "Conditioning & LR Sensitivity",
+    "Optimizer Explanations",
+    "How to Use"
 ])
 
 
@@ -128,29 +120,27 @@ with tabs[0]:
     col_ctrl, col_viz = st.columns([1, 2.5], gap="medium")
 
     with col_ctrl:
-        st.markdown("### 🎛️ Playground Controls")
+        st.markdown("#### Surface & Optimizers")
         
         # 1. Loss surface selector
         surface_key = st.selectbox(
-            "Select 2D Loss Surface",
+            "Loss Surface",
             options=list(SURFACES.keys()),
             index=list(SURFACES.keys()).index(DEFAULT_SURFACE_KEY),
-            help="Choose between L1 (mild bowl) to L4 (ill-conditioned narrow valley)",
+            help="Select a 2D surface to test optimizer paths under different conditioning levels",
             key="part_a_surface_select"
         )
         selected_surface = get_surface(surface_key)
 
-        st.info(f"**Condition Number (κ):** {selected_surface.condition_number:.0f}  \n"
-                f"**Formula:** $L(x, y) = {selected_surface.formula_str}$  \n"
-                f"**Global Min:** (0, 0)")
+        st.caption(f"**Formula:** $L(x, y) = {selected_surface.formula_str}$ | **Condition Number (κ):** {selected_surface.condition_number:.0f} | **Minimum:** (0, 0)")
 
         # 2. Multi-select optimizers
         all_opts = ["SGD", "Momentum", "NAG", "AdaGrad", "RMSProp", "Adam", "AdamW"]
         selected_opts = st.multiselect(
-            "Select Optimizers to Overlay",
+            "Selected Optimizers",
             options=all_opts,
             default=["SGD", "Momentum", "AdaGrad", "Adam"],
-            help="Select one or more optimizers to compare trajectories simultaneously",
+            help="Select one or more optimizers to compare simultaneously",
             key="part_a_optimizer_multiselect"
         )
 
@@ -158,7 +148,7 @@ with tabs[0]:
             st.warning("Please select at least one optimizer.")
             selected_opts = ["Adam"]
 
-        st.markdown("#### ⚙️ Hyperparameters")
+        st.markdown("#### Parameters")
         
         # Learning rate
         lr = st.number_input(
@@ -168,25 +158,41 @@ with tabs[0]:
             value=0.01,
             step=0.001,
             format="%.4f",
-            help="Default is 0.01. Controls step magnitude along the gradient.",
+            help="Controls step size along the gradient vector.",
             key="part_a_lr_input"
         )
 
-        # Optimizer-specific parameters inside expander
-        with st.expander("Advanced Optimizer Parameters", expanded=False):
-            beta_momentum = st.slider("Momentum / NAG β", min_value=0.0, max_value=0.99, value=0.9, step=0.05, key="part_a_beta_momentum")
-            beta_rmsprop = st.slider("RMSProp β", min_value=0.0, max_value=0.99, value=0.9, step=0.05, key="part_a_beta_rmsprop")
-            beta1_adam = st.slider("Adam/AdamW β₁", min_value=0.0, max_value=0.99, value=0.9, step=0.05, key="part_a_beta1_adam")
-            beta2_adam = st.slider("Adam/AdamW β₂", min_value=0.5, max_value=0.9999, value=0.999, step=0.001, format="%.4f", key="part_a_beta2_adam")
-            weight_decay = st.number_input("AdamW Weight Decay (λ)", min_value=0.0, max_value=0.5, value=0.001, step=0.001, format="%.4f", key="part_a_lambda_adamw")
+        # Relevant optimizer-specific hyperparameters
+        has_momentum = any(o in selected_opts for o in ["Momentum", "NAG"])
+        has_rmsprop = "RMSProp" in selected_opts
+        has_adam = any(o in selected_opts for o in ["Adam", "AdamW"])
+        has_adamw = "AdamW" in selected_opts
+
+        beta_momentum = 0.9
+        beta_rmsprop = 0.9
+        beta1_adam = 0.9
+        beta2_adam = 0.999
+        weight_decay = 0.001
+
+        if has_momentum or has_rmsprop or has_adam or has_adamw:
+            with st.expander("Hyperparameter Settings", expanded=False):
+                if has_momentum:
+                    beta_momentum = st.slider("Momentum / NAG β", 0.0, 0.99, 0.9, 0.05, key="part_a_beta_momentum")
+                if has_rmsprop:
+                    beta_rmsprop = st.slider("RMSProp β", 0.0, 0.99, 0.9, 0.05, key="part_a_beta_rmsprop")
+                if has_adam:
+                    beta1_adam = st.slider("Adam/AdamW β₁", 0.0, 0.99, 0.9, 0.05, key="part_a_beta1_adam")
+                    beta2_adam = st.slider("Adam/AdamW β₂", 0.5, 0.9999, 0.999, 0.001, format="%.4f", key="part_a_beta2_adam")
+                if has_adamw:
+                    weight_decay = st.number_input("AdamW Weight Decay (λ)", 0.0, 0.5, 0.001, 0.001, format="%.4f", key="part_a_lambda_adamw")
 
         # Starting point
-        st.markdown("#### 📍 Starting Position & Steps")
+        st.markdown("#### Starting Coordinates & Steps")
         col_x0, col_y0 = st.columns(2)
         with col_x0:
-            x0 = st.number_input("Initial x₀", value=8.0, step=0.5, key="part_a_x0_input")
+            x0 = st.number_input("x₀", value=8.0, step=0.5, key="part_a_x0_input")
         with col_y0:
-            y0 = st.number_input("Initial y₀", value=8.0, step=0.5, key="part_a_y0_input")
+            y0 = st.number_input("y₀", value=8.0, step=0.5, key="part_a_y0_input")
 
         max_steps = st.slider("Max Iterations", min_value=50, max_value=500, value=300, step=25, key="part_a_max_steps_slider")
 
@@ -220,39 +226,37 @@ with tabs[0]:
             trajectories[opt_name] = traj
             losses_dict[opt_name] = loss_hist
 
-        # Determine effective maximum trajectory length
         actual_max_len = max([len(t) for t in trajectories.values()]) if trajectories else max_steps
 
         # Animation Controls
-        st.markdown("#### 🎬 Animation Controls")
+        st.markdown("#### Animation Controls")
         c_play, c_pause, c_step, c_reset = st.columns(4)
         
         with c_play:
-            if st.button("▶️ Play", use_container_width=True, key="btn_play"):
+            if st.button("Play", use_container_width=True, key="btn_play"):
                 st.session_state.is_playing = True
         with c_pause:
-            if st.button("⏸️ Pause", use_container_width=True, key="btn_pause"):
+            if st.button("Pause", use_container_width=True, key="btn_pause"):
                 st.session_state.is_playing = False
         with c_step:
-            if st.button("⏭️ Step", use_container_width=True, key="btn_step"):
+            if st.button("Step", use_container_width=True, key="btn_step"):
                 st.session_state.is_playing = False
                 st.session_state.anim_step = min(st.session_state.anim_step + 5, actual_max_len - 1)
         with c_reset:
-            if st.button("🔄 Reset", use_container_width=True, key="btn_reset"):
+            if st.button("Reset", use_container_width=True, key="btn_reset"):
                 st.session_state.is_playing = False
                 st.session_state.anim_step = 0
 
         anim_speed = st.select_slider(
             "Animation Speed",
-            options=["Slow (1x)", "Normal (2x)", "Fast (5x)", "Instant (Max)"],
-            value="Fast (5x)",
+            options=["1x", "2x", "5x", "Max"],
+            value="5x",
             key="anim_speed_slider"
         )
-        step_increment = {"Slow (1x)": 1, "Normal (2x)": 3, "Fast (5x)": 8, "Instant (Max)": 25}[anim_speed]
+        step_increment = {"1x": 1, "2x": 3, "5x": 8, "Max": 25}[anim_speed]
 
-        # Slider for manual scrubbing
         st.session_state.anim_step = st.slider(
-            "Iteration Scrub Bar",
+            "Iteration",
             min_value=0,
             max_value=max(actual_max_len - 1, 1),
             value=min(st.session_state.anim_step, max(actual_max_len - 1, 1)),
@@ -261,7 +265,7 @@ with tabs[0]:
         )
 
     with col_viz:
-        st.markdown("### 📊 Synchronized Real-Time Views")
+        st.markdown("#### Synchronized Trajectory & Loss Views")
         v1_col, v2_col = st.columns(2, gap="small")
         
         with v1_col:
@@ -283,8 +287,8 @@ with tabs[0]:
             )
             st.plotly_chart(fig_loss, use_container_width=True, key="fig_loss_chart")
 
-        # Trajectory Step Summary Metrics
-        st.markdown("##### 📈 Current Step Optimizer Status")
+        # Step Status Metrics
+        st.markdown("##### Current Optimizer Position & Loss")
         m_cols = st.columns(len(selected_opts))
         for idx, opt_name in enumerate(selected_opts):
             with m_cols[idx]:
@@ -295,7 +299,7 @@ with tabs[0]:
                 st.markdown(f"""
                 <div style="border-left: 3px solid {OPTIMIZER_COLORS[opt_name]}; padding-left: 8px; margin-bottom: 8px;">
                     <strong>{opt_name}</strong><br>
-                    <small>Pos: ({curr_pos[0]:.2f}, {curr_pos[1]:.2f})</small><br>
+                    <small>({curr_pos[0]:.2f}, {curr_pos[1]:.2f})</small><br>
                     <small>Loss: <b>{curr_loss:.4e}</b></small>
                 </div>
                 """, unsafe_allow_html=True)
@@ -313,8 +317,8 @@ with tabs[0]:
 # TAB 2: PART B — REAL NEURAL NETWORK TRAINING
 # ==============================================================================
 with tabs[1]:
-    st.markdown("### 🧠 Multi-Layer Perceptron on Breast Cancer Wisconsin Dataset")
-    st.markdown("Train a 3-layer neural network from scratch using pure NumPy backpropagation and evaluate the 7 custom optimizers.")
+    st.markdown("#### Multi-Layer Perceptron on Breast Cancer Wisconsin Dataset")
+    st.caption("Architecture: 30 → 16 (ReLU) → 8 (ReLU) → 1 (Sigmoid). Implemented from scratch in NumPy with analytical backpropagation.")
 
     dm: DatasetManager = st.session_state.dataset_manager
     meta = dm.get_metadata()
@@ -352,7 +356,7 @@ with tabs[1]:
     with c_m5:
         st.markdown(f"""
         <div class="metric-card">
-            <div class="metric-title">Architecture</div>
+            <div class="metric-title">Layers</div>
             <div class="metric-value" style="font-size: 1.1rem; padding-top: 6px;">30→16→8→1</div>
         </div>
         """, unsafe_allow_html=True)
@@ -362,13 +366,13 @@ with tabs[1]:
     col_nn_ctrl, col_nn_dash = st.columns([1, 2.5], gap="medium")
 
     with col_nn_ctrl:
-        st.markdown("#### ⚙️ Training Configuration")
+        st.markdown("#### Training Setup")
         
         nn_selected_opts = st.multiselect(
-            "Select Optimizers to Train",
+            "Optimizers to Train",
             options=all_opts,
             default=["SGD", "Momentum", "AdaGrad", "RMSProp", "Adam", "AdamW"],
-            help="Select optimizers for benchmark training",
+            help="Select optimizers to benchmark",
             key="nn_selected_opts_multiselect"
         )
 
@@ -385,17 +389,16 @@ with tabs[1]:
         nn_epochs = st.slider("Epochs", min_value=10, max_value=200, value=80, step=10, key="nn_epochs_slider")
         nn_batch_size = st.selectbox("Batch Size", options=[16, 32, 64, meta['train_samples']], index=1, format_func=lambda x: f"{x} (Full Batch)" if x == meta['train_samples'] else str(x), key="nn_batch_size_select")
 
-        with st.expander("Optimizer Specific Hyperparameters", expanded=False):
+        with st.expander("Hyperparameter Options", expanded=False):
             nn_beta1 = st.slider("Momentum / Adam β₁", 0.0, 0.99, 0.9, 0.05, key="nn_beta1_slider")
             nn_beta2 = st.slider("Adam / AdamW β₂", 0.5, 0.9999, 0.999, 0.001, format="%.4f", key="nn_beta2_slider")
             nn_wd = st.number_input("AdamW Weight Decay (λ)", 0.0, 0.1, 0.001, 0.001, format="%.4f", key="nn_wd_input")
 
-        train_btn = st.button("🚀 Start Training", type="primary", use_container_width=True, key="nn_start_train_btn")
+        train_btn = st.button("Start Training", type="primary", use_container_width=True, key="nn_start_train_btn")
 
     with col_nn_dash:
-        st.markdown("#### 📊 Live Training Dashboard")
+        st.markdown("#### Live Training Dashboard")
 
-        # Container placeholders for live updates during training
         plot_loss_holder = st.empty()
         plot_acc_holder = st.empty()
         plot_eff_lr_holder = st.empty()
@@ -436,7 +439,6 @@ with tabs[1]:
                             progress_bar.progress(min(overall_prog, 1.0))
                             status_text.text(f"Training {current_opt_name}... Epoch {ep}/{nn_epochs}")
                             
-                            # Live redraw every 2 epochs or final epoch
                             if ep % 2 == 0 or ep == nn_epochs:
                                 plot_loss_holder.plotly_chart(create_nn_loss_figure(histories), use_container_width=True)
                                 plot_acc_holder.plotly_chart(create_nn_accuracy_figure(histories), use_container_width=True)
@@ -454,47 +456,44 @@ with tabs[1]:
 
                 st.session_state.nn_histories = histories
                 progress_bar.progress(1.0)
-                status_text.success("Training completed successfully for all selected optimizers.")
+                status_text.success("Training completed successfully.")
         elif st.session_state.nn_histories:
-            # Populate charts from session state when not actively training in current script run
             h = st.session_state.nn_histories
             plot_loss_holder.plotly_chart(create_nn_loss_figure(h), use_container_width=True)
             plot_acc_holder.plotly_chart(create_nn_accuracy_figure(h), use_container_width=True)
             plot_eff_lr_holder.plotly_chart(create_effective_lr_figure(h), use_container_width=True)
         else:
-            st.info("Click **'🚀 Start Training'** above to run the neural network benchmark live.")
+            st.info("Click 'Start Training' above to run the neural network training benchmark.")
 
         if st.session_state.nn_histories:
             h = st.session_state.nn_histories
-            st.markdown("### 📋 Automatic Comparison Table (PDF Section B3)")
-            st.markdown("Convergence epoch is auto-computed as the first epoch where validation loss reaches within **1% of its final value**.")
+            st.markdown("#### Comparison Table")
+            st.caption("Convergence epoch is defined as the first epoch at which validation loss reaches within 1% of its final value.")
             
             comp_df = NNTrainingEngine.generate_comparison_dataframe(h)
             st.dataframe(comp_df, use_container_width=True, hide_index=True)
-        else:
-            st.info("Click **'🚀 Start Training'** above to run the neural network benchmark live.")
 
 
 # ==============================================================================
 # TAB 3: CONDITIONING & LR SENSITIVITY EXPLORERS
 # ==============================================================================
 with tabs[2]:
-    st.markdown("### 🔬 Conditioning & Learning-Rate Sensitivity Explorers")
+    st.markdown("#### Explorers: Conditioning & Learning-Rate Sensitivity")
     
     col_exp1, col_exp2 = st.columns(2, gap="large")
 
     with col_exp1:
-        st.markdown("#### 1. Conditioning Explorer (PDF Section A5)")
+        st.markdown("##### 1. Conditioning Explorer (PDF Section A5)")
         st.markdown(r"""
-        The condition number $\kappa = \frac{\lambda_{\max}}{\lambda_{\min}}$ of the Hessian matrix measures how elongated the loss bowl is:
+        The condition number $\kappa = \frac{\lambda_{\max}}{\lambda_{\min}}$ of the Hessian matrix measures curvature anisotropy:
         - **$L_1 = x^2 + 10y^2$** ($\kappa = 10$): Mild anisotropy.
         - **$L_2 = x^2 + 50y^2$** ($\kappa = 50$): Moderate elongation.
         - **$L_3 = x^2 + 100y^2$** ($\kappa = 100$): Steep narrow canyon.
         - **$L_4 = x^2 + 1000y^2$** ($\kappa = 1000$): Ill-conditioned valley.
         """)
 
-        cond_opt = st.selectbox("Select Optimizer for Conditioning Analysis", ["SGD", "Momentum", "NAG", "AdaGrad", "RMSProp", "Adam", "AdamW"], index=0, key="cond_opt_select")
-        cond_lr = st.slider("Learning Rate for Conditioning Test", 0.001, 0.05, 0.01, 0.001, format="%.3f", key="cond_lr_slider")
+        cond_opt = st.selectbox("Optimizer for Conditioning Comparison", ["SGD", "Momentum", "NAG", "AdaGrad", "RMSProp", "Adam", "AdamW"], index=0, key="cond_opt_select")
+        cond_lr = st.slider("Learning Rate", 0.001, 0.05, 0.01, 0.001, format="%.3f", key="cond_lr_slider")
 
         cond_trajs = {}
         for s_name, surf in SURFACES.items():
@@ -515,18 +514,18 @@ with tabs[2]:
         )
         st.plotly_chart(fig_cond, use_container_width=True, key="fig_cond_chart")
 
-        st.caption("On $L_4$, SGD exhibits pronounced vertical oscillation because the gradient magnitude along y is substantially larger than along x.")
+        st.caption("On $L_4$, SGD shows larger vertical oscillations because the gradient magnitude along y is substantially larger than along x.")
 
     with col_exp2:
-        st.markdown("#### 2. Learning-Rate Sensitivity Explorer (PDF Section A6)")
+        st.markdown("##### 2. Learning-Rate Sensitivity Explorer (PDF Section A6)")
         st.markdown(r"""
-        Sweep learning rates across three canonical regimes:
-        - **$\eta = 0.001$**: Lower step size, smooth steady convergence.
-        - **$\eta = 0.01$**: Standard baseline learning rate.
-        - **$\eta = 0.1$**: Higher step size, highlights oscillation or divergence boundaries.
+        Examine how step size affects convergence on the default bowl ($L_2 = x^2 + 50y^2$):
+        - **$\eta = 0.001$**: Smaller step size, smooth steady progress.
+        - **$\eta = 0.01$**: Default baseline learning rate.
+        - **$\eta = 0.1$**: Larger step size, demonstrates oscillation or divergence boundaries.
         """)
 
-        sens_opt = st.selectbox("Select Optimizer for Sensitivity Analysis", ["SGD", "Momentum", "AdaGrad", "RMSProp", "Adam"], index=0, key="sens_opt_select")
+        sens_opt = st.selectbox("Optimizer for Sensitivity Test", ["SGD", "Momentum", "AdaGrad", "RMSProp", "Adam"], index=0, key="sens_opt_select")
         sens_surf = SURFACES[DEFAULT_SURFACE_KEY]
 
         fig_sens = go.Figure()
@@ -536,12 +535,13 @@ with tabs[2]:
         for idx, test_lr in enumerate(lr_presets):
             o = get_optimizer(sens_opt, lr=test_lr)
             t_pts, l_pts = sens_surf.simulate_trajectory(o, start_point=(8.0, 8.0), max_iters=100)
+            status_label = "Diverged" if (np.isnan(l_pts[-1]) or l_pts[-1] > 1e4) else "Converged"
             fig_sens.add_trace(go.Scatter(
                 x=list(range(len(l_pts))),
                 y=l_pts,
                 mode="lines",
                 line=dict(color=colors[idx], width=2.5),
-                name=f"η = {test_lr} ({'Diverged' if np.isnan(l_pts[-1]) or l_pts[-1] > 1e4 else 'Converged'})"
+                name=f"η = {test_lr} ({status_label})"
             ))
 
         fig_sens.update_layout(
@@ -554,69 +554,69 @@ with tabs[2]:
             margin=dict(l=30, r=20, t=40, b=30)
         )
         st.plotly_chart(fig_sens, use_container_width=True, key="fig_sens_chart")
-        st.caption("At η = 0.1 on the default bowl (where the maximum Hessian eigenvalue is 100), SGD exceeds the numerical stability threshold (η > 2/λ_max = 0.02).")
+        st.caption("At η = 0.1 on the default bowl (where maximum Hessian eigenvalue is 100), constant-step gradient descent exceeds the stability bound (η > 2/λ_max = 0.02).")
 
 
 # ==============================================================================
 # TAB 4: EXPLAIN-AS-YOU-GO PANEL
 # ==============================================================================
 with tabs[3]:
-    st.markdown("### 💡 Explain-As-You-Go: Intuitive Mathematical Deep Dives")
-    st.markdown("Detailed educational breakdowns of advanced optimizer mechanics based on assignment theory.")
+    st.markdown("#### Optimizer Explanations")
+    st.caption("Core mathematical update rules and intuitive design rationale based on the assignment.")
 
     exp_nag, exp_adagrad, exp_rmsprop, exp_adamw = st.tabs([
-        "🏎️ NAG Look-Ahead",
-        "📊 AdaGrad Scaling",
-        "🌊 RMSProp Moving Average",
-        "⚖️ AdamW Decoupled Decay"
+        "NAG Look-Ahead",
+        "AdaGrad Scaling",
+        "RMSProp Moving Average",
+        "AdamW Decoupled Decay"
     ])
 
     with exp_nag:
         st.markdown(r"""
-        #### Nesterov Accelerated Gradient (NAG)
-        **Core Update Rule:**
+        ##### Nesterov Accelerated Gradient (NAG)
+        **Update Rule:**
         $$\theta_{\text{lookahead}} = \theta_t - \beta v_{t-1}$$
         $$v_t = \beta v_{t-1} + (1 - \beta) \nabla L(\theta_{\text{lookahead}})$$
         $$\theta_{t+1} = \theta_t - \eta v_t$$
 
-        **Why Look-Ahead Reduces Overshoot:**
-        - Standard Momentum computes the gradient at the *current* point $\theta_t$ and adds accumulated velocity blindly, which can overshoot valleys before correcting.
-        - NAG evaluates the gradient at the look-ahead point $\theta_t - \beta v_{t-1}$. If the momentum is carrying the parameters up the opposite slope, the look-ahead gradient detects the upward slope in advance and applies an opposing corrective force before the full update is applied.
+        **Mechanism:**
+        - Standard Momentum computes the gradient at the current position $\theta_t$ and adds accumulated velocity.
+        - NAG evaluates the gradient at the look-ahead point $\theta_t - \beta v_{t-1}$. If accumulated velocity is carrying parameters up an opposing slope, the look-ahead gradient detects the slope in advance and applies an opposing corrective force before the full update is applied.
         """)
 
     with exp_adagrad:
         st.markdown(r"""
-        #### AdaGrad (Adaptive Gradient Algorithm)
-        **Core Update Rule:**
+        ##### AdaGrad (Adaptive Gradient Algorithm)
+        **Update Rule:**
         $$G_t = G_{t-1} + g_t^2$$
         $$\theta_{t+1} = \theta_t - \frac{\eta}{\sqrt{G_t + \epsilon}} \odot g_t$$
 
-        **Why Parameter-Wise Adaptive Scaling Works:**
+        **Mechanism:**
         - In anisotropic loss landscapes (such as $L(x, y) = x^2 + 50y^2$), gradients along $y$ are substantially larger ($100y$) than along $x$ ($2x$).
-        - AdaGrad accumulates squared gradients independently for every coordinate:
+        - AdaGrad accumulates squared gradients coordinate-by-coordinate:
           $$G_{t, y} \gg G_{t, x} \implies \frac{\eta}{\sqrt{G_{t, y}}} \ll \frac{\eta}{\sqrt{G_{t, x}}}$$
-        - This dynamically dampens the step size along the steep $y$-axis while maintaining a relatively larger effective learning rate along the shallow $x$-axis.
+        - This scales down step sizes along the steep $y$-axis while maintaining a relatively larger effective learning rate along the shallow $x$-axis.
         """)
 
     with exp_rmsprop:
         st.markdown(r"""
-        #### RMSProp (Root Mean Square Propagation)
-        **Core Update Rule:**
+        ##### RMSProp (Root Mean Square Propagation)
+        **Update Rule:**
         $$v_t = \beta v_{t-1} + (1 - \beta) g_t^2$$
         $$\theta_{t+1} = \theta_t - \frac{\eta}{\sqrt{v_t + \epsilon}} \odot g_t$$
 
-        **How It Fixes AdaGrad's Diminishing Learning Rate:**
-        - AdaGrad continuously accumulates positive squared gradients $g_t^2$ into $G_t$, causing the effective learning rate $\frac{\eta}{\sqrt{G_t}}$ to shrink toward zero over extended iterations.
-        - RMSProp replaces the monotonic sum with an **exponential moving average** (discount factor $\beta=0.9$), discounting distant past gradients. The effective step size stabilizes according to recent local gradient magnitudes rather than decaying indefinitely.
+        **Mechanism:**
+        - AdaGrad continuously accumulates positive squared gradients $g_t^2$ into $G_t$, causing the effective learning rate $\frac{\eta}{\sqrt{G_t}}$ to shrink toward zero over long runs.
+        - RMSProp replaces the cumulative sum with an **exponential moving average** (discount factor $\beta=0.9$), discounting distant past gradients. The effective step size stabilizes according to recent gradient energy rather than decaying indefinitely.
         """)
 
     with exp_adamw:
         st.markdown(r"""
-        #### AdamW (Adam with Decoupled Weight Decay)
-        **Core Update Rule:**
+        ##### AdamW (Adam with Decoupled Weight Decay)
+        **Update Rule:**
         $$\theta_{t+1} = \theta_t - \eta \left( \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \epsilon} + \lambda \theta_t \right) = \theta_t (1 - \eta \lambda) - \eta \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \epsilon}$$
 
-        **Decoupled Weight Decay vs. L2 Regularization in Gradient:**
+        **Mechanism:**
         - In standard Adam with L2 regularization, weight decay is folded directly into the gradient: $g_t' = g_t + \lambda \theta_t$.
         - When scaled by the adaptive second-moment denominator $\sqrt{\hat{v}_t}$, parameters with large historical gradients experience reduced weight decay penalties, whereas parameters with small gradients receive disproportionately large penalties.
         - **AdamW decouples weight decay completely from the gradient step**, applying proportional shrinkage directly to $\theta_t$, ensuring uniform parameter regularization regardless of gradient magnitude.
@@ -627,13 +627,13 @@ with tabs[3]:
 # TAB 5: HOW TO USE THIS TOOL
 # ==============================================================================
 with tabs[4]:
-    st.markdown("### 📖 How to Use This Tool")
+    st.markdown("#### How to Use This Tool")
     
     col_h1, col_h2 = st.columns(2, gap="large")
 
     with col_h1:
         st.markdown(r"""
-        #### Part A — 2D Optimizer Playground
+        ##### Part A — 2D Optimizer Playground
         1. **Select Loss Surface:** Choose between $L_1$ to $L_4$ to observe how Hessian conditioning ($\kappa = 10 \to 1000$) alters trajectory paths.
         2. **Choose Optimizers:** Overlay multiple optimizers simultaneously to compare trajectories under identical conditions.
         3. **Tune Hyperparameters:** Adjust the learning rate ($\eta$), momentum factors ($\beta$), Adam moments ($\beta_1, \beta_2$), and AdamW weight decay ($\lambda$).
@@ -643,24 +643,24 @@ with tabs[4]:
 
     with col_h2:
         st.markdown(r"""
-        #### Part B — Real Neural Network Training
+        ##### Part B — Real Neural Network Training
         1. **Inspect Dataset Metrics:** Check dynamic sample counts (569 total, 30 features, train/test split) loaded from the Breast Cancer Wisconsin dataset.
         2. **Configure Benchmark:** Select optimizers, learning rate, batch size, and epoch count.
-        3. **Start Training:** Click **🚀 Start Training** to run training from scratch using pure NumPy forward and backward passes.
+        3. **Start Training:** Click **Start Training** to run training from scratch using pure NumPy forward and backward passes.
         4. **Live Dashboard:** Monitor live training/test loss, accuracy, and the **effective learning rate ($\eta_{\text{eff}}$)** for representative weight $W_1[0,0]$.
         5. **Comparison Table:** Review auto-computed convergence epochs (first epoch reaching within 1% of final loss) and final test accuracies.
         """)
 
     st.markdown("---")
     st.markdown("""
-    #### 📚 Optimizer Summary Reference
-    | Optimizer | Key Innovation | Typical Use Case / Behavior |
+    ##### Optimizer Summary Reference
+    | Optimizer | Key Idea | Primary Characteristic |
     |---|---|---|
-    | **SGD** | Direct first-order gradient descent | Baseline; sensitive to learning rate and curvature |
-    | **Momentum** | Exponentially weighted velocity buffer | Accelerates along consistent slopes, dampens oscillation |
-    | **NAG** | Look-ahead gradient evaluation | Proactively brakes before steep ascents |
-    | **AdaGrad** | Coordinate-wise cumulative squared gradients | Adapts to parameter scale; effective rate shrinks over long horizons |
-    | **RMSProp** | Exponential moving average of squared gradients | Maintains adaptive scaling without indefinite shrinkage |
-    | **Adam** | Combines Momentum and RMSProp + bias correction | Robust across diverse deep learning architectures |
-    | **AdamW** | Decoupled weight decay regularization | Prevents regularization distortion in adaptive optimization |
+    | **SGD** | First-order gradient descent | Direct gradient updates; sensitive to curvature and learning rate |
+    | **Momentum** | Velocity buffer | Accumulates consistent directional updates, reduces oscillation |
+    | **NAG** | Look-ahead gradient | Evaluates gradient at predicted position to reduce overshoot |
+    | **AdaGrad** | Cumulative squared gradients | Parameter-wise scaling; learning rate shrinks over time |
+    | **RMSProp** | Exponential moving average of squared gradients | Parameter-wise scaling with recent gradient memory |
+    | **Adam** | First and second moments with bias correction | Combines momentum and adaptive scaling with early-step correction |
+    | **AdamW** | Decoupled weight decay | Applies weight decay directly to parameters, preserving true regularization |
     """)

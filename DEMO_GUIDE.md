@@ -1,73 +1,87 @@
-# Deep Learning Lab Live Demonstration Guide (2–4 Minutes)
+# Lab Demonstration Guide (2–4 Minutes)
 
-**Target Audience:** Lab Instructor / Evaluation Committee  
-**Goal:** Deliver a polished, clear live demonstration highlighting from-scratch mathematical derivations, interactive real-time visual synchronization, and neural network benchmarking.
+This guide outlines a concise 2–4 minute presentation workflow for demonstrating the Optimizer Visualizer during the lab evaluation.
 
 ---
 
-## ⏱️ Timestamped Demonstration Sequence (3 Minutes Total)
+## Demonstration Sequence Overview
 
+```text
+[0:00 - 0:30]  Step 1: Introduction to 2D Loss Surfaces & Setup
+[0:30 - 1:15]  Step 2: Compare Optimizer Trajectories & Synchronized Views
+[1:15 - 1:50]  Step 3: Conditioning & Stability Explorers
+[1:50 - 2:40]  Step 4: Neural Network Training & Live Dashboard
+[2:40 - 3:00]  Step 5: Comparison Table & Conclusion
 ```
-[0:00 - 0:30]  Phase 1: Architecture & 2D Landscape Introduction
-[0:30 - 1:15]  Phase 2: Live Optimizer Comparison on Anisotropic Bowl (Play / Sync Views)
-[1:15 - 1:50]  Phase 3: Conditioning Explorer & Divergence Demonstration
-[1:50 - 2:40]  Phase 4: Part B Real Neural Network Live Training & Effective LR Readout
-[2:40 - 3:00]  Phase 5: Auto-Computed Comparison Table & Conclusion
-```
 
 ---
 
-### Phase 1: Introduction & Default Setup (0:00 – 0:30)
-- **Action:** Open application via `streamlit run app.py`. Navigate to **Tab 1: Part A (2D Optimizer Playground)**.
-- **Talking Points:**
-  > *"This interactive Deep Learning Optimizer Visualizer is implemented from scratch using pure NumPy for both the seven optimizers and the neural network mathematical core.*  
-  > *Here on screen is Part A: an anisotropic 2D loss surface $L(x, y) = x^2 + 50y^2$ with condition number $\kappa = 50$. The $y$-axis has 50 times greater curvature than the shallow $x$-axis, providing a standard benchmark for observing directional scaling and oscillation."*
+### Step 1: Introduction to 2D Loss Surfaces (0:00 – 0:30)
+
+- **Action:** Open the application (`streamlit run app.py`). Stay on **Part A — 2D Playground**.
+- **What to Observe:**
+  - Default surface: $L_2(x, y) = x^2 + 50y^2$ with condition number $\kappa = 50$.
+  - Global minimum at $(0, 0)$ and starting position $(8, 8)$.
+- **What to Explain:**
+  > *"The visualizer implements seven optimizers and a 3-layer neural network from scratch using pure NumPy.*  
+  > *In Part A, the default surface $L_2$ has a curvature along $y$ that is 50 times larger than along $x$, creating an anisotropic bowl to test how optimizers handle directional scaling."*
 
 ---
 
-### Phase 2: Live 2D Trajectories & Synchronized Dual Views (0:30 – 1:15)
-- **Action:** Select `SGD`, `Momentum`, `AdaGrad`, and `Adam`. Ensure starting position is $(8, 8)$ and learning rate is $0.01$. Click **▶️ Play**.
-- **Talking Points:**
-  > *"Notice how the two views update in lock-step:*  
-  > *1. **SGD (Red):** Shows pronounced oscillatory steps across the steep $y$-axis while making slower progress along $x$.*  
-  > *2. **Momentum (Orange):** Smooths out vertical oscillations through its velocity buffer and accelerates along the consistent horizontal direction.*  
-  > *3. **AdaGrad (Teal):** Adapts its coordinate scale dynamically, bending diagonally toward the origin, with step sizes diminishing over extended iterations.*  
-  > *4. **Adam (Navy):** Combines momentum and adaptive second moments with early bias correction, resulting in a smooth, direct path toward $(0,0)$ and rapid early loss decrease on View 2."*
+### Step 2: Compare Optimizer Trajectories (0:30 – 1:15)
+
+- **Action:** Select `SGD`, `Momentum`, `AdaGrad`, and `Adam`. Set learning rate $\eta = 0.01$. Click **Play**.
+- **What to Observe:**
+  - **View 1 (Contour Map):** Trajectories growing point-by-point.
+  - **View 2 (Loss Curve):** Synchronized loss descent across iterations.
+- **What to Explain:**
+  > *"As the animation plays:*  
+  > *1. **SGD (Red):** Oscillates across the steep $y$-axis while making slower progress along $x$.*  
+  > *2. **Momentum (Orange):** Dampens vertical oscillations and accelerates along $x$ using its velocity buffer.*  
+  > *3. **AdaGrad (Teal):** Adapts coordinate scales independently, bending diagonally toward the origin, though step sizes diminish over longer runs.*  
+  > *4. **Adam (Navy):** Combines momentum and adaptive second moments with bias correction, producing a smooth trajectory directly toward the minimum."*
 
 ---
 
-### Phase 3: Conditioning & Learning-Rate Sensitivity (1:15 – 1:50)
-- **Action:** Switch to **Tab 3: Explorers**. Select surface **$L_4 = x^2 + 1000y^2$** ($\kappa = 1000$).
-- **Talking Points:**
-  > *"When we increase the condition number to $\kappa = 1000$, the maximum Hessian eigenvalue along $y$ is 2000. At $\eta = 0.01$, $\eta \cdot 2000 = 20 > 2$, which exceeds the theoretical numerical stability limit ($\eta < 2/\lambda_{\max}$) for constant-step gradient descent.*  
-  > *Consequently, **SGD and Momentum diverge**, whereas the adaptive optimizers (**AdaGrad, RMSProp, Adam, AdamW**) remain stable because their coordinate-wise denominators dynamically rescale the large gradients to manageable step sizes."*
+### Step 3: Conditioning & Stability Explorers (1:15 – 1:50)
+
+- **Action:** Switch to the **Conditioning & LR Sensitivity** tab. Select surface $L_4(x, y) = x^2 + 1000y^2$ ($\kappa = 1000$).
+- **What to Observe:**
+  - Trajectory comparison across $L_1$ through $L_4$.
+  - Sensitivity curves for $\eta \in \{0.001, 0.01, 0.1\}$.
+- **What to Explain:**
+  > *"On $L_4$, the condition number is 1000. At $\eta = 0.01$, constant-step gradient descent exceeds the stability bound ($\eta > 2/\lambda_{\max} = 0.001$), causing SGD to diverge.*  
+  > *In contrast, adaptive optimizers scale updates inversely by recent gradient magnitudes, maintaining stable convergence."*
 
 ---
 
-### Phase 4: Part B Real Neural Network Training (1:50 – 2:40)
-- **Action:** Switch to **Tab 2: Part B (Real Neural Network Training)**.
-- **Talking Points:**
-  > *"In Part B, we train a 3-layer Multi-Layer Perceptron ($30 \to 16 \to 8 \to 1$) on the Breast Cancer Wisconsin dataset using manual NumPy forward propagation, binary cross-entropy loss, and backpropagation.*  
-  > *The UI dynamically reports the dataset split: **569 total samples, 30 features, 455 training samples, and 114 test samples**.*  
-  > *Let's select the optimizers and click **'Start Training'**.*  
-  > *(Point to live dashboard charts)*  
-  > *The bottom chart shows the **live Effective Learning Rate ($\eta_{\text{eff}}$) readout for weight $W_1[0,0]$**. We can observe AdaGrad's effective learning rate gradually shrinking over epochs, while RMSProp, Adam, and AdamW maintain adaptive values across training."*
+### Step 4: Neural Network Training & Live Dashboard (1:50 – 2:40)
+
+- **Action:** Switch to **Part B — Neural Network**. Review the dynamic dataset statistics (569 samples, 30 features, 455 train, 114 test). Select all optimizers and click **Start Training**.
+- **What to Observe:**
+  - Live epoch updates of training loss, validation loss, and accuracy.
+  - Live **Effective Learning Rate ($\eta_{\text{eff}}$)** plot for representative weight $W_1[0,0]$.
+- **What to Explain:**
+  > *"Part B trains an MLP ($30 \to 16 \to 8 \to 1$) on the Breast Cancer Wisconsin dataset using manual backpropagation.*  
+  > *The effective learning rate plot empirically shows AdaGrad's learning rate monotonically shrinking over epochs, while RMSProp and Adam maintain adaptive step scales."*
 
 ---
 
-### Phase 5: Automatic Comparison Table & Closing (2:40 – 3:00)
-- **Action:** Scroll down to the **Automatic Comparison Table** at the bottom of Part B.
-- **Talking Points:**
-  > *"The comparison table is automatically computed by code. The convergence epoch is calculated as the first epoch reaching within 1% of the final validation loss.*  
-  > *In our experiment, while RMSProp achieves zero training error, **AdamW produces the lowest test loss (0.1406) with 96.49% test accuracy**, illustrating how decoupled weight decay helps mitigate overfitting in neural network parameters.*  
-  > *Thank you, and I welcome any questions."*
+### Step 5: Comparison Table & Summary (2:40 – 3:00)
+
+- **Action:** Scroll to the **Comparison Table** generated at the end of training.
+- **What to Observe:**
+  - Final train loss, test loss, train accuracy, test accuracy, and auto-computed convergence epoch (first epoch reaching within 1% of final validation loss).
+- **What to Explain:**
+  > *"The comparison table summarizes training metrics across all selected optimizers.*  
+  > *AdamW applies decoupled weight decay directly to parameters, achieving lower test loss on this benchmark by preventing the regularization distortion present in standard adaptive gradient methods."*
 
 ---
 
-## 📸 Recommended Screenshots for Submission
+## Suggested Screenshots for Submission
 
-1. **`part_a_trajectories_l2.png`**: Multi-optimizer trajectory overlay on default surface $L_2$ showing comparative convergence paths.
-2. **`part_a_synchronized_loss.png`**: View 1 (Contour map) and View 2 (Loss curve) displayed simultaneously.
-3. **`part_a_conditioning_divergence.png`**: Trajectory comparison on surface $L_4$ ($\kappa = 1000$) illustrating stability boundaries.
-4. **`part_b_live_dashboard.png`**: Live epoch curves for training loss, validation loss, accuracy, and effective learning rate for $W_1[0,0]$.
-5. **`part_b_comparison_table.png`**: Auto-generated comparison table with final train/test losses, accuracies, and convergence epochs.
+1. **`part_a_trajectories_l2.png`**: Multi-optimizer trajectory overlay on surface $L_2$.
+2. **`part_a_synchronized_views.png`**: Dual synchronized views (Contour map and Loss curve).
+3. **`part_a_conditioning_explorer.png`**: Trajectory comparison across $L_1$ to $L_4$.
+4. **`part_b_live_dashboard.png`**: Live loss, accuracy, and effective learning rate curves.
+5. **`part_b_comparison_table.png`**: Auto-computed summary table with convergence epochs.
