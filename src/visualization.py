@@ -58,11 +58,11 @@ def create_contour_figure(
         x=[0.0],
         y=[0.0],
         mode="markers+text",
-        marker=dict(size=16, color="#FFD700", symbol="star", line=dict(color="#000", width=1.5)),
-        text=["Global Min ★ (0,0)"],
+        marker=dict(size=15, color="#FFD700", symbol="star", line=dict(color="#000", width=1.5)),
+        text=["★ (0,0)"],
         textposition="bottom right",
-        textfont=dict(color="#FFFFFF", size=11, family="sans-serif"),
-        name="Global Minimum ★",
+        textfont=dict(color="#FFFFFF", size=10, family="sans-serif"),
+        name="Global Min ★",
         showlegend=True
     ))
 
@@ -71,7 +71,7 @@ def create_contour_figure(
         x=[start_point[0]],
         y=[start_point[1]],
         mode="markers+text",
-        marker=dict(size=12, color="#FFFFFF", symbol="circle-open", line=dict(color="#FFFFFF", width=2.5)),
+        marker=dict(size=11, color="#FFFFFF", symbol="circle-open", line=dict(color="#FFFFFF", width=2)),
         text=["Start (x₀,y₀)"],
         textposition="top right",
         textfont=dict(color="#FFFFFF", size=10),
@@ -93,7 +93,7 @@ def create_contour_figure(
             x=sub_traj[:, 0],
             y=sub_traj[:, 1],
             mode="lines",
-            line=dict(color=color, width=3),
+            line=dict(color=color, width=2.8),
             name=f"{opt_name}",
             legendgroup=opt_name,
             showlegend=True
@@ -105,7 +105,7 @@ def create_contour_figure(
             x=[curr_x],
             y=[curr_y],
             mode="markers",
-            marker=dict(size=10, color=color, symbol="circle", line=dict(color="#FFFFFF", width=1.5)),
+            marker=dict(size=9, color=color, symbol="circle", line=dict(color="#FFFFFF", width=1.5)),
             name=f"{opt_name} (Current)",
             legendgroup=opt_name,
             showlegend=False,
@@ -118,7 +118,9 @@ def create_contour_figure(
             text=f"<b>View 1: Parameter Trajectories on {surface.formula_str}</b> (Step {current_step}, κ={surface.condition_number:.0f})",
             x=0.5,
             xanchor="center",
-            font=dict(size=14)
+            y=0.98,
+            yanchor="top",
+            font=dict(size=13)
         ),
         xaxis=dict(
             title="Parameter x (Shallow Axis)",
@@ -134,14 +136,14 @@ def create_contour_figure(
             zerolinecolor="rgba(255,255,255,0.3)",
             gridcolor="rgba(255,255,255,0.1)"
         ),
-        margin=dict(l=40, r=20, t=50, b=40),
+        margin=dict(l=45, r=25, t=80, b=45),
         legend=dict(
             orientation="h",
-            yanchor="bottom",
-            y=1.02,
+            yanchor="top",
+            y=0.89,
             xanchor="center",
             x=0.5,
-            bgcolor="rgba(0,0,0,0.5)",
+            bgcolor="rgba(0,0,0,0.3)",
             font=dict(size=10)
         ),
         template="plotly_dark",
@@ -192,7 +194,7 @@ def create_loss_curve_figure(
                 x=[idx],
                 y=[curr_loss],
                 mode="markers",
-                marker=dict(size=9, color=color, symbol="circle", line=dict(color="#FFFFFF", width=1.5)),
+                marker=dict(size=8, color=color, symbol="circle", line=dict(color="#FFFFFF", width=1.5)),
                 name=f"{opt_name} Current",
                 legendgroup=opt_name,
                 showlegend=False,
@@ -205,7 +207,9 @@ def create_loss_curve_figure(
             text=f"<b>View 2: Loss Curve L(θₜ) vs. Iteration t</b> (Step {current_step})",
             x=0.5,
             xanchor="center",
-            font=dict(size=14)
+            y=0.98,
+            yanchor="top",
+            font=dict(size=13)
         ),
         xaxis=dict(
             title="Iteration t",
@@ -217,14 +221,14 @@ def create_loss_curve_figure(
             type="log" if log_scale else "linear",
             gridcolor="rgba(255,255,255,0.1)"
         ),
-        margin=dict(l=40, r=20, t=50, b=40),
+        margin=dict(l=50, r=25, t=80, b=45),
         legend=dict(
             orientation="h",
-            yanchor="bottom",
-            y=1.02,
+            yanchor="top",
+            y=0.89,
             xanchor="center",
             x=0.5,
-            bgcolor="rgba(0,0,0,0.5)",
+            bgcolor="rgba(0,0,0,0.3)",
             font=dict(size=10)
         ),
         template="plotly_dark",
@@ -247,7 +251,7 @@ def create_nn_loss_figure(histories: Dict[str, TrainingHistory]) -> go.Figure:
             x=hist.epochs,
             y=hist.train_losses,
             mode="lines",
-            line=dict(color=color, width=2.5),
+            line=dict(color=color, width=2.4),
             name=f"{opt_name} (Train)",
             legendgroup=opt_name
         ))
@@ -257,19 +261,34 @@ def create_nn_loss_figure(histories: Dict[str, TrainingHistory]) -> go.Figure:
             x=hist.epochs,
             y=hist.test_losses,
             mode="lines",
-            line=dict(color=color, width=2, dash="dash"),
-            name=f"{opt_name} (Test/Val)",
+            line=dict(color=color, width=1.8, dash="dash"),
+            name=f"{opt_name} (Test)",
             legendgroup=opt_name
         ))
 
     fig.update_layout(
-        title=dict(text="<b>Training & Test Loss vs. Epoch</b>", x=0.5, xanchor="center"),
+        title=dict(
+            text="<b>Training & Test Loss vs. Epoch</b>",
+            x=0.5,
+            xanchor="center",
+            y=0.98,
+            yanchor="top",
+            font=dict(size=13.5)
+        ),
         xaxis=dict(title="Epoch", gridcolor="rgba(255,255,255,0.1)"),
         yaxis=dict(title="Binary Cross-Entropy Loss", gridcolor="rgba(255,255,255,0.1)"),
         template="plotly_dark",
-        margin=dict(l=40, r=20, t=40, b=40),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5, font=dict(size=9)),
-        height=380
+        margin=dict(l=50, r=25, t=85, b=45),
+        legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=0.88,
+            xanchor="center",
+            x=0.5,
+            font=dict(size=9.5),
+            bgcolor="rgba(0,0,0,0)"
+        ),
+        height=410
     )
     return fig
 
@@ -287,7 +306,7 @@ def create_nn_accuracy_figure(histories: Dict[str, TrainingHistory]) -> go.Figur
             x=hist.epochs,
             y=[acc * 100 for acc in hist.train_accuracies],
             mode="lines",
-            line=dict(color=color, width=2.5),
+            line=dict(color=color, width=2.4),
             name=f"{opt_name} (Train)",
             legendgroup=opt_name
         ))
@@ -296,19 +315,34 @@ def create_nn_accuracy_figure(histories: Dict[str, TrainingHistory]) -> go.Figur
             x=hist.epochs,
             y=[acc * 100 for acc in hist.test_accuracies],
             mode="lines",
-            line=dict(color=color, width=2, dash="dash"),
+            line=dict(color=color, width=1.8, dash="dash"),
             name=f"{opt_name} (Test)",
             legendgroup=opt_name
         ))
 
     fig.update_layout(
-        title=dict(text="<b>Classification Accuracy (%) vs. Epoch</b>", x=0.5, xanchor="center"),
+        title=dict(
+            text="<b>Classification Accuracy (%) vs. Epoch</b>",
+            x=0.5,
+            xanchor="center",
+            y=0.98,
+            yanchor="top",
+            font=dict(size=13.5)
+        ),
         xaxis=dict(title="Epoch", gridcolor="rgba(255,255,255,0.1)"),
         yaxis=dict(title="Accuracy (%)", range=[40, 102], gridcolor="rgba(255,255,255,0.1)"),
         template="plotly_dark",
-        margin=dict(l=40, r=20, t=40, b=40),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5, font=dict(size=9)),
-        height=380
+        margin=dict(l=50, r=25, t=85, b=45),
+        legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=0.88,
+            xanchor="center",
+            x=0.5,
+            font=dict(size=9.5),
+            bgcolor="rgba(0,0,0,0)"
+        ),
+        height=410
     )
     return fig
 
@@ -330,22 +364,33 @@ def create_effective_lr_figure(histories: Dict[str, TrainingHistory]) -> go.Figu
             x=hist.epochs,
             y=hist.effective_lrs,
             mode="lines",
-            line=dict(color=color, width=2.5),
+            line=dict(color=color, width=2.4),
             name=f"{opt_name} (η_eff)",
             legendgroup=opt_name
         ))
 
     fig.update_layout(
         title=dict(
-            text="<b>Effective Learning Rate (η_eff) for Representative Weight W₁[0,0] vs. Epoch</b>",
+            text="<b>Effective Learning Rate (η_eff) — Weight W₁[0,0] vs. Epoch</b>",
             x=0.5,
-            xanchor="center"
+            xanchor="center",
+            y=0.98,
+            yanchor="top",
+            font=dict(size=13)
         ),
         xaxis=dict(title="Epoch", gridcolor="rgba(255,255,255,0.1)"),
-        yaxis=dict(title="Effective Learning Rate (η / √(v̂ₜ + ε))", type="log", gridcolor="rgba(255,255,255,0.1)"),
+        yaxis=dict(title="Effective Step Size (η / √(v̂ₜ + ε))", type="log", gridcolor="rgba(255,255,255,0.1)"),
         template="plotly_dark",
-        margin=dict(l=40, r=20, t=40, b=40),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5, font=dict(size=10)),
-        height=380
+        margin=dict(l=50, r=25, t=85, b=45),
+        legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=0.88,
+            xanchor="center",
+            x=0.5,
+            font=dict(size=9.5),
+            bgcolor="rgba(0,0,0,0)"
+        ),
+        height=410
     )
     return fig

@@ -558,12 +558,28 @@ with tabs[2]:
         for s_label, pts in cond_trajs.items():
             fig_cond.add_trace(go.Scatter(x=pts[:, 0], y=pts[:, 1], mode="lines+markers", name=s_label, marker=dict(size=4)))
         fig_cond.update_layout(
-            title=f"<b>{cond_opt} Trajectories across Conditioning Levels</b>",
+            title=dict(
+                text=f"<b>{cond_opt} Trajectories across Conditioning Levels</b>",
+                x=0.5,
+                xanchor="center",
+                y=0.98,
+                yanchor="top",
+                font=dict(size=13)
+            ),
             xaxis_title="Parameter x",
             yaxis_title="Parameter y",
             template="plotly_dark",
-            height=400,
-            margin=dict(l=30, r=20, t=40, b=30)
+            height=430,
+            margin=dict(l=40, r=20, t=80, b=35),
+            legend=dict(
+                orientation="h",
+                yanchor="top",
+                y=0.88,
+                xanchor="center",
+                x=0.5,
+                font=dict(size=9.5),
+                bgcolor="rgba(0,0,0,0)"
+            )
         )
         st.plotly_chart(fig_cond, use_container_width=True, key="fig_cond_chart")
 
@@ -598,13 +614,29 @@ with tabs[2]:
             ))
 
         fig_sens.update_layout(
-            title=f"<b>{sens_opt} Loss Sensitivity across η ∈ {{0.001, 0.01, 0.1}}</b>",
+            title=dict(
+                text=f"<b>{sens_opt} Loss Sensitivity across η ∈ {{0.001, 0.01, 0.1}}</b>",
+                x=0.5,
+                xanchor="center",
+                y=0.98,
+                yanchor="top",
+                font=dict(size=13)
+            ),
             xaxis_title="Iteration t",
             yaxis_title="Loss L(θₜ) (Log Scale)",
             yaxis_type="log",
             template="plotly_dark",
-            height=400,
-            margin=dict(l=30, r=20, t=40, b=30)
+            height=430,
+            margin=dict(l=40, r=20, t=80, b=35),
+            legend=dict(
+                orientation="h",
+                yanchor="top",
+                y=0.88,
+                xanchor="center",
+                x=0.5,
+                font=dict(size=9.5),
+                bgcolor="rgba(0,0,0,0)"
+            )
         )
         st.plotly_chart(fig_sens, use_container_width=True, key="fig_sens_chart")
         st.caption("At η = 0.1 on the default bowl (where maximum Hessian eigenvalue is 100), constant-step gradient descent exceeds the stability bound (η > 2/λ_max = 0.02).")
