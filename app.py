@@ -574,13 +574,14 @@ with tabs[2]:
                 xanchor="center",
                 y=0.98,
                 yanchor="top",
-                font=dict(size=13)
+                font=dict(size=13),
+                pad=dict(r=70)
             ),
             xaxis_title="Parameter x",
             yaxis_title="Parameter y",
             template="plotly_dark",
             height=430,
-            margin=dict(l=40, r=20, t=80, b=35),
+            margin=dict(l=40, r=20, t=100, b=35),
             legend=dict(
                 orientation="h",
                 yanchor="top",
@@ -589,6 +590,11 @@ with tabs[2]:
                 x=0.5,
                 font=dict(size=9.5),
                 bgcolor="rgba(0,0,0,0)"
+            ),
+            modebar=dict(
+                orientation="h",
+                bgcolor="rgba(0,0,0,0)",
+                activecolor="#58A6FF"
             )
         )
         st.plotly_chart(fig_cond, use_container_width=True, key="fig_cond_chart", config=PLOTLY_CONFIG)
@@ -630,14 +636,15 @@ with tabs[2]:
                 xanchor="center",
                 y=0.98,
                 yanchor="top",
-                font=dict(size=13)
+                font=dict(size=13),
+                pad=dict(r=70)
             ),
             xaxis_title="Iteration t",
             yaxis_title="Loss L(θₜ) (Log Scale)",
             yaxis_type="log",
             template="plotly_dark",
             height=430,
-            margin=dict(l=40, r=20, t=80, b=35),
+            margin=dict(l=40, r=20, t=100, b=35),
             legend=dict(
                 orientation="h",
                 yanchor="top",
@@ -646,6 +653,11 @@ with tabs[2]:
                 x=0.5,
                 font=dict(size=9.5),
                 bgcolor="rgba(0,0,0,0)"
+            ),
+            modebar=dict(
+                orientation="h",
+                bgcolor="rgba(0,0,0,0)",
+                activecolor="#58A6FF"
             )
         )
         st.plotly_chart(fig_sens, use_container_width=True, key="fig_sens_chart", config=PLOTLY_CONFIG)

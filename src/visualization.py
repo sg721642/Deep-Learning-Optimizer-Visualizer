@@ -10,7 +10,7 @@ from src.surfaces import LossSurface2D
 from src.experiment import TrainingHistory
 
 PLOTLY_CONFIG = {
-    "displayModeBar": True,
+    "displayModeBar": "hover",
     "displaylogo": False,
     "modeBarButtonsToRemove": ["lasso2d", "select2d"]
 }
@@ -161,7 +161,8 @@ def create_contour_figure(
             xanchor="center",
             y=0.98,
             yanchor="top",
-            font=dict(size=13)
+            font=dict(size=13),
+            pad=dict(r=70)
         ),
         xaxis=dict(
             title="Parameter x (Shallow Axis)",
@@ -177,7 +178,7 @@ def create_contour_figure(
             zerolinecolor="rgba(255,255,255,0.3)",
             gridcolor="rgba(255,255,255,0.1)"
         ),
-        margin=dict(l=45, r=25, t=95, b=45),
+        margin=dict(l=45, r=25, t=100, b=45),
         legend=dict(
             orientation="h",
             yanchor="top",
@@ -186,6 +187,11 @@ def create_contour_figure(
             x=0.5,
             bgcolor="rgba(0,0,0,0)",
             font=dict(size=10)
+        ),
+        modebar=dict(
+            orientation="h",
+            bgcolor="rgba(0,0,0,0)",
+            activecolor="#58A6FF"
         ),
         template="plotly_dark",
         height=530
@@ -250,7 +256,8 @@ def create_loss_curve_figure(
             xanchor="center",
             y=0.98,
             yanchor="top",
-            font=dict(size=13)
+            font=dict(size=13),
+            pad=dict(r=70)
         ),
         xaxis=dict(
             title="Iteration t",
@@ -262,7 +269,7 @@ def create_loss_curve_figure(
             type="log" if log_scale else "linear",
             gridcolor="rgba(255,255,255,0.1)"
         ),
-        margin=dict(l=50, r=25, t=95, b=45),
+        margin=dict(l=50, r=25, t=100, b=45),
         legend=dict(
             orientation="h",
             yanchor="top",
@@ -271,6 +278,11 @@ def create_loss_curve_figure(
             x=0.5,
             bgcolor="rgba(0,0,0,0)",
             font=dict(size=10)
+        ),
+        modebar=dict(
+            orientation="h",
+            bgcolor="rgba(0,0,0,0)",
+            activecolor="#58A6FF"
         ),
         template="plotly_dark",
         height=530
@@ -314,12 +326,13 @@ def create_nn_loss_figure(histories: Dict[str, TrainingHistory]) -> go.Figure:
             xanchor="center",
             y=0.98,
             yanchor="top",
-            font=dict(size=13.5)
+            font=dict(size=13.5),
+            pad=dict(r=70)
         ),
         xaxis=dict(title="Epoch", gridcolor="rgba(255,255,255,0.1)"),
         yaxis=dict(title="Binary Cross-Entropy Loss", gridcolor="rgba(255,255,255,0.1)"),
         template="plotly_dark",
-        margin=dict(l=50, r=25, t=95, b=45),
+        margin=dict(l=50, r=25, t=100, b=45),
         legend=dict(
             orientation="h",
             yanchor="top",
@@ -328,6 +341,11 @@ def create_nn_loss_figure(histories: Dict[str, TrainingHistory]) -> go.Figure:
             x=0.5,
             font=dict(size=9.0),
             bgcolor="rgba(0,0,0,0)"
+        ),
+        modebar=dict(
+            orientation="h",
+            bgcolor="rgba(0,0,0,0)",
+            activecolor="#58A6FF"
         ),
         height=430
     )
@@ -368,12 +386,13 @@ def create_nn_accuracy_figure(histories: Dict[str, TrainingHistory]) -> go.Figur
             xanchor="center",
             y=0.98,
             yanchor="top",
-            font=dict(size=13.5)
+            font=dict(size=13.5),
+            pad=dict(r=70)
         ),
         xaxis=dict(title="Epoch", gridcolor="rgba(255,255,255,0.1)"),
         yaxis=dict(title="Accuracy (%)", range=[40, 102], gridcolor="rgba(255,255,255,0.1)"),
         template="plotly_dark",
-        margin=dict(l=50, r=25, t=95, b=45),
+        margin=dict(l=50, r=25, t=100, b=45),
         legend=dict(
             orientation="h",
             yanchor="top",
@@ -382,6 +401,11 @@ def create_nn_accuracy_figure(histories: Dict[str, TrainingHistory]) -> go.Figur
             x=0.5,
             font=dict(size=9.0),
             bgcolor="rgba(0,0,0,0)"
+        ),
+        modebar=dict(
+            orientation="h",
+            bgcolor="rgba(0,0,0,0)",
+            activecolor="#58A6FF"
         ),
         height=430
     )
@@ -427,7 +451,8 @@ def create_effective_lr_figure(histories: Dict[str, TrainingHistory]) -> go.Figu
             xanchor="center",
             y=0.98,
             yanchor="top",
-            font=dict(size=13)
+            font=dict(size=13),
+            pad=dict(r=70)
         ),
         xaxis=dict(title="Epoch", gridcolor="rgba(255,255,255,0.1)"),
         yaxis=dict(
@@ -436,7 +461,7 @@ def create_effective_lr_figure(histories: Dict[str, TrainingHistory]) -> go.Figu
             gridcolor="rgba(255,255,255,0.1)"
         ),
         template="plotly_dark",
-        margin=dict(l=50, r=25, t=95, b=45),
+        margin=dict(l=50, r=25, t=100, b=45),
         legend=dict(
             orientation="h",
             yanchor="top",
@@ -445,6 +470,11 @@ def create_effective_lr_figure(histories: Dict[str, TrainingHistory]) -> go.Figu
             x=0.5,
             font=dict(size=9.5),
             bgcolor="rgba(0,0,0,0)"
+        ),
+        modebar=dict(
+            orientation="h",
+            bgcolor="rgba(0,0,0,0)",
+            activecolor="#58A6FF"
         ),
         height=430
     )
