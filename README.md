@@ -1,5 +1,7 @@
 # Optimizer Visualizer: From SGD to AdamW
 
+🔗 **Live Demo:** https://sg721642-deep-learning-optimizer-visualizer-app-mnapjy.streamlit.app/
+
 An interactive visual tool to explore how deep learning optimizers learn from first principles. Implemented completely from scratch in pure NumPy, featuring 2D loss surface simulations and real-time Multi-Layer Perceptron benchmarking.
 
 ---
