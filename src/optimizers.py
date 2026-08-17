@@ -19,7 +19,7 @@ OPTIMIZER_COLORS: Dict[str, str] = {
 OPTIMIZER_DESCRIPTIONS: Dict[str, str] = {
     "SGD": "Standard Stochastic Gradient Descent. Directly updates parameters in the direction of the negative gradient.",
     "Momentum": "SGD with Momentum. Accumulates past gradients as velocity to dampen oscillations and accelerate in consistent directions.",
-    "NAG": "Nesterov Accelerated Gradient. Evaluates gradients at a look-ahead position (θ - β*v) to apply anticipatory braking.",
+    "NAG": "Nesterov Accelerated Gradient. Evaluates gradients at a look-ahead position (θ - η·β·v) to apply anticipatory braking.",
     "AdaGrad": "Adaptive Gradient Algorithm. Scales learning rates inversely proportional to the cumulative sum of squared gradients.",
     "RMSProp": "Root Mean Square Propagation. Resolves AdaGrad's diminishing learning rate using an exponential moving average of squared gradients.",
     "Adam": "Adaptive Moment Estimation. Combines first moments (momentum) and second moments (RMSProp) with bias correction.",
