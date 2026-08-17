@@ -55,7 +55,7 @@
 | B1.5 | Exact same 7 optimizer implementations reused for neural network weight/bias updates | [x] COMPLETE | `NNTrainingEngine` uses `get_optimizer()` from `src/optimizers.py` |
 | B2.1 | Live Training Dashboard: Optimizer multi-select, hyperparameter tuning, epochs, batch size, "Train" button | [x] COMPLETE | Interactive dashboard in Tab 2 of `app.py` |
 | B2.2 | Real-time live epoch charts: Training Loss vs Epoch, Test/Validation Loss vs Epoch, Accuracy vs Epoch | [x] COMPLETE | Live epoch callbacks update Plotly charts dynamically during training |
-| B2.3 | Live Effective Learning Rate readout for representative weight ($\frac{\eta}{\sqrt{G_t+\epsilon}}$ or $\frac{\eta}{\sqrt{\hat{v}_t+\epsilon}}$) for AdaGrad, RMSProp, Adam, AdamW | [x] COMPLETE | `create_effective_lr_figure` plots $\eta_{\text{eff}}$ for $W_1[0,0]$ over epochs |
+| B2.3 | Live Effective Learning Rate readout for representative weight ($\frac{\eta}{\sqrt{G_t+\epsilon}}$ for AdaGrad/RMSProp; $\frac{\eta}{\sqrt{\hat{v}_t}+\epsilon}$ for Adam/AdamW) | [x] COMPLETE | `create_effective_lr_figure` plots $\eta_{\text{eff}}$ for $W_1[0,0]$ over epochs |
 | B3.1 | Auto-computed Comparison Table: Optimizer, Final Train Loss, Final Test Loss, Train Acc, Test Acc, Convergence Epoch | [x] COMPLETE | Computed via `NNTrainingEngine.generate_comparison_dataframe()` |
 | B3.2 | Automatic Convergence Epoch calculation: First epoch where validation loss reaches within 1% of final value | [x] COMPLETE | Algorithmic implementation in `TrainingHistory.compute_convergence_epoch()` |
 | B4.1 | **Section B4 Reflection Questions**: Complete answers to all 16 questions based on real training runs | [x] COMPLETE | Comprehensive answers documented in `REFLECTION_ANSWERS.md` |
