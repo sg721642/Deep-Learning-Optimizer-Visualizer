@@ -322,7 +322,7 @@ class Adam(BaseOptimizer):
         v_t = β_2 * v_{t-1} + (1 - β_2) * g_t^2
         m̂_t = m_t / (1 - β_1^t)
         v̂_t = v_t / (1 - β_2^t)
-        θ_{t+1} = θ_t - η * m̂_t / (√(v̂_t + ε))
+        θ_{t+1} = θ_t - η * m̂_t / (√v̂_t + ε)     [ε is OUTSIDE the sqrt per PDF spec]
     """
     def __init__(
         self,
@@ -376,8 +376,8 @@ class Adam(BaseOptimizer):
             m_hat = self.m[k] / (1.0 - self.beta1 ** self.t)
             v_hat = self.v[k] / (1.0 - self.beta2 ** self.t)
 
-            # Effective learning rate: η / (√(v̂_t + ε))
-            effective_lr = self.lr / np.sqrt(v_hat + self.eps)
+            # Effective learning rate: η / (√v̂_t + ε)  — ε is outside the sqrt per PDF spec
+            effective_lr = self.lr / (np.sqrt(v_hat) + self.eps)
             self.last_effective_lr[k] = effective_lr
 
             # θ_{t+1} = θ_t - effective_lr * m̂_t
@@ -394,7 +394,7 @@ class AdamW(BaseOptimizer):
         v_t = β_2 * v_{t-1} + (1 - β_2) * g_t^2
         m̂_t = m_t / (1 - β_1^t)
         v̂_t = v_t / (1 - β_2^t)
-        θ_{t+1} = θ_t - η * ( m̂_t / (√(v̂_t + ε)) + λ * θ_t )
+        θ_{t+1} = θ_t - η * ( m̂_t / (√v̂_t + ε) + λ * θ_t )  [ε is OUTSIDE the sqrt per PDF spec]
     """
     def __init__(
         self,
@@ -452,14 +452,12 @@ class AdamW(BaseOptimizer):
             m_hat = self.m[k] / (1.0 - self.beta1 ** self.t)
             v_hat = self.v[k] / (1.0 - self.beta2 ** self.t)
 
-            # Effective adaptive step scale
-            effective_lr = self.lr / np.sqrt(v_hat + self.eps)
+            # Effective adaptive step scale: η / (√v̂_t + ε)  — ε is outside the sqrt per PDF spec
+            effective_lr = self.lr / (np.sqrt(v_hat) + self.eps)
             self.last_effective_lr[k] = effective_lr
 
             # Decoupled weight decay: θ_{t+1} = θ_t * (1 - η * λ) - effective_lr * m̂_t
             updated[k] = p * (1.0 - self.lr * self.weight_decay) - effective_lr * m_hat
-
-        return updated if is_dict else updated["param"]
 
         return updated if is_dict else updated["param"]
 

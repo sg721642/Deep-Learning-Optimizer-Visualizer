@@ -106,12 +106,12 @@ def ref_rmsprop(theta0: np.ndarray, lr: float, beta: float, eps: float, steps: i
 
 def ref_adam(theta0: np.ndarray, lr: float, beta1: float, beta2: float, eps: float, steps: int) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Pure mathematical Adam:
+    Pure mathematical Adam (per PDF spec):
         m_t = β1 m_{t-1} + (1-β1) g_t
         v_t = β2 v_{t-1} + (1-β2) g_t^2
         m̂_t = m_t / (1 - β1^t)
         v̂_t = v_t / (1 - β2^t)
-        θ_{t+1} = θ_t - η * m̂_t / √(v̂_t + ε)
+        θ_{t+1} = θ_t - η * m̂_t / (√v̂_t + ε)    [ε is OUTSIDE the sqrt per PDF spec]
     """
     traj = [theta0.copy()]
     losses = [ref_l2_loss(theta0[0], theta0[1])]
@@ -124,7 +124,7 @@ def ref_adam(theta0: np.ndarray, lr: float, beta1: float, beta2: float, eps: flo
         v = beta2 * v + (1.0 - beta2) * (g**2)
         m_hat = m / (1.0 - beta1**t)
         v_hat = v / (1.0 - beta2**t)
-        eff_lr = lr / np.sqrt(v_hat + eps)
+        eff_lr = lr / (np.sqrt(v_hat) + eps)
         theta = theta - eff_lr * m_hat
         traj.append(theta.copy())
         losses.append(ref_l2_loss(theta[0], theta[1]))
@@ -133,8 +133,8 @@ def ref_adam(theta0: np.ndarray, lr: float, beta1: float, beta2: float, eps: flo
 
 def ref_adamw(theta0: np.ndarray, lr: float, beta1: float, beta2: float, eps: float, weight_decay: float, steps: int) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Pure mathematical AdamW (Decoupled Weight Decay):
-        θ_{t+1} = θ_t * (1 - η * λ) - η * m̂_t / √(v̂_t + ε)
+    Pure mathematical AdamW — Decoupled Weight Decay (per PDF spec):
+        θ_{t+1} = θ_t * (1 - η * λ) - η * m̂_t / (√v̂_t + ε)    [ε is OUTSIDE the sqrt per PDF spec]
     """
     traj = [theta0.copy()]
     losses = [ref_l2_loss(theta0[0], theta0[1])]
@@ -147,7 +147,7 @@ def ref_adamw(theta0: np.ndarray, lr: float, beta1: float, beta2: float, eps: fl
         v = beta2 * v + (1.0 - beta2) * (g**2)
         m_hat = m / (1.0 - beta1**t)
         v_hat = v / (1.0 - beta2**t)
-        eff_lr = lr / np.sqrt(v_hat + eps)
+        eff_lr = lr / (np.sqrt(v_hat) + eps)
         theta = theta * (1.0 - lr * weight_decay) - eff_lr * m_hat
         traj.append(theta.copy())
         losses.append(ref_l2_loss(theta[0], theta[1]))
