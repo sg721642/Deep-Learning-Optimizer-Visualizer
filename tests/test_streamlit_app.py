@@ -1,13 +1,24 @@
 """
 Integration test for Streamlit app to verify Part A animation controls and Part B training execution.
 """
+import sys
+from pathlib import Path
+
 import pytest
 from streamlit.testing.v1 import AppTest
+
+# Resolve path to app.py at repo root regardless of where pytest is invoked from
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+_APP_PATH = str(_REPO_ROOT / "app.py")
+
+# Ensure src/ is importable when running from the tests/ directory
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
 
 
 def test_streamlit_app_part_a_and_b():
     """Run simulated Streamlit test verifying Part A animation controls and Part B training."""
-    at = AppTest.from_file("app.py", default_timeout=30)
+    at = AppTest.from_file(_APP_PATH, default_timeout=30)
     at.run()
     assert not at.exception, f"Streamlit app raised an exception on load: {at.exception}"
 

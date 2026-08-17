@@ -172,15 +172,14 @@ with tabs[0]:
 
         st.markdown("#### Parameters")
         
-        # Learning rate
-        lr = st.number_input(
+        # Learning rate — log-spaced presets for precise control
+        _lr_presets_a = [0.0001, 0.0003, 0.001, 0.003, 0.005, 0.01, 0.03, 0.05, 0.1, 0.3, 0.5, 1.0]
+        lr = st.select_slider(
             "Learning Rate (η)",
-            min_value=0.0001,
-            max_value=1.0,
+            options=_lr_presets_a,
             value=0.01,
-            step=0.001,
-            format="%.4f",
-            help="Controls step size along the gradient vector.",
+            format_func=lambda v: f"{v:.4g}",
+            help="Controls step size along the gradient vector (log-spaced presets).",
             key="part_a_lr_input"
         )
 
@@ -298,13 +297,13 @@ with tabs[0]:
         c_play, c_pause, c_step, c_reset = st.columns(4)
         
         with c_play:
-            st.button("Play", use_container_width=True, key="part_a_play", on_click=on_play_clicked)
+            st.button("Play", width="stretch", key="part_a_play", on_click=on_play_clicked)
         with c_pause:
-            st.button("Pause", use_container_width=True, key="part_a_pause", on_click=on_pause_clicked)
+            st.button("Pause", width="stretch", key="part_a_pause", on_click=on_pause_clicked)
         with c_step:
-            st.button("Step", use_container_width=True, key="part_a_step", on_click=on_step_clicked)
+            st.button("Step", width="stretch", key="part_a_step", on_click=on_step_clicked)
         with c_reset:
-            st.button("Reset", use_container_width=True, key="part_a_reset", on_click=on_reset_clicked)
+            st.button("Reset", width="stretch", key="part_a_reset", on_click=on_reset_clicked)
 
         anim_speed = st.select_slider(
             "Animation Speed",
@@ -337,7 +336,7 @@ with tabs[0]:
                 x_range=(-max(abs(x0) + 2, 10), max(abs(x0) + 2, 10)),
                 y_range=(-max(abs(y0) + 2, 10), max(abs(y0) + 2, 10))
             )
-            st.plotly_chart(fig_contour, use_container_width=True, key="fig_contour_chart", config=PLOTLY_CONFIG)
+            st.plotly_chart(fig_contour, key="fig_contour_chart", config=PLOTLY_CONFIG)
 
         with v2_col:
             fig_loss = create_loss_curve_figure(
@@ -345,7 +344,7 @@ with tabs[0]:
                 current_step=current_step,
                 log_scale=True
             )
-            st.plotly_chart(fig_loss, use_container_width=True, key="fig_loss_chart", config=PLOTLY_CONFIG)
+            st.plotly_chart(fig_loss, key="fig_loss_chart", config=PLOTLY_CONFIG)
 
         # Step Status Metrics
         st.markdown(f"##### Current Optimizer Position & Loss (Iteration {current_step}/{max_valid_step})")
@@ -439,13 +438,12 @@ with tabs[1]:
             key="nn_selected_opts_multiselect"
         )
 
-        nn_lr = st.number_input(
+        _lr_presets_b = [0.0001, 0.0003, 0.001, 0.003, 0.005, 0.01, 0.03, 0.05, 0.1, 0.3, 0.5, 1.0]
+        nn_lr = st.select_slider(
             "Learning Rate (η)",
-            min_value=0.0001,
-            max_value=1.0,
+            options=_lr_presets_b,
             value=0.01,
-            step=0.005,
-            format="%.4f",
+            format_func=lambda v: f"{v:.4g}",
             key="nn_lr_input"
         )
 
@@ -457,7 +455,7 @@ with tabs[1]:
             nn_beta2 = st.slider("Adam / AdamW β₂", 0.5, 0.9999, 0.999, 0.001, format="%.4f", key="nn_beta2_slider")
             nn_wd = st.number_input("AdamW Weight Decay (λ)", 0.0, 0.1, 0.001, 0.001, format="%.4f", key="nn_wd_input")
 
-        train_btn = st.button("Start Training", type="primary", use_container_width=True, key="nn_start_train_btn")
+        train_btn = st.button("Start Training", type="primary", width="stretch", key="nn_start_train_btn")
 
     with col_nn_dash:
         st.markdown("#### Live Training Dashboard")
@@ -503,9 +501,9 @@ with tabs[1]:
                             status_text.text(f"Training {current_opt_name}... Epoch {ep}/{nn_epochs}")
                             
                             if ep % 2 == 0 or ep == nn_epochs:
-                                plot_loss_holder.plotly_chart(create_nn_loss_figure(histories), use_container_width=True, key=f"nn_loss_live_{current_opt_name}_{ep}", config=PLOTLY_CONFIG)
-                                plot_acc_holder.plotly_chart(create_nn_accuracy_figure(histories), use_container_width=True, key=f"nn_acc_live_{current_opt_name}_{ep}", config=PLOTLY_CONFIG)
-                                plot_eff_lr_holder.plotly_chart(create_effective_lr_figure(histories), use_container_width=True, key=f"nn_lr_live_{current_opt_name}_{ep}", config=PLOTLY_CONFIG)
+                                plot_loss_holder.plotly_chart(create_nn_loss_figure(histories), key=f"nn_loss_live_{current_opt_name}_{ep}", config=PLOTLY_CONFIG)
+                                plot_acc_holder.plotly_chart(create_nn_accuracy_figure(histories), key=f"nn_acc_live_{current_opt_name}_{ep}", config=PLOTLY_CONFIG)
+                                plot_eff_lr_holder.plotly_chart(create_effective_lr_figure(histories), key=f"nn_lr_live_{current_opt_name}_{ep}", config=PLOTLY_CONFIG)
                         return cb
 
                     hist = engine.train_single_optimizer(
@@ -522,9 +520,9 @@ with tabs[1]:
                 status_text.success("Training completed successfully.")
         elif st.session_state.nn_histories:
             h = st.session_state.nn_histories
-            plot_loss_holder.plotly_chart(create_nn_loss_figure(h), use_container_width=True, key="nn_loss_static", config=PLOTLY_CONFIG)
-            plot_acc_holder.plotly_chart(create_nn_accuracy_figure(h), use_container_width=True, key="nn_acc_static", config=PLOTLY_CONFIG)
-            plot_eff_lr_holder.plotly_chart(create_effective_lr_figure(h), use_container_width=True, key="nn_eff_lr_static", config=PLOTLY_CONFIG)
+            plot_loss_holder.plotly_chart(create_nn_loss_figure(h), key="nn_loss_static", config=PLOTLY_CONFIG)
+            plot_acc_holder.plotly_chart(create_nn_accuracy_figure(h), key="nn_acc_static", config=PLOTLY_CONFIG)
+            plot_eff_lr_holder.plotly_chart(create_effective_lr_figure(h), key="nn_eff_lr_static", config=PLOTLY_CONFIG)
         else:
             st.info("Click 'Start Training' above to run the neural network training benchmark.")
 
@@ -534,7 +532,7 @@ with tabs[1]:
             st.caption("Convergence epoch is defined as the first epoch at which validation loss reaches within 1% of its final value.")
             
             comp_df = NNTrainingEngine.generate_comparison_dataframe(h)
-            st.dataframe(comp_df, use_container_width=True, hide_index=True)
+            st.dataframe(comp_df, hide_index=True)
 
 
 # ==============================================================================
@@ -597,7 +595,7 @@ with tabs[2]:
                 activecolor="#58A6FF"
             )
         )
-        st.plotly_chart(fig_cond, use_container_width=True, key="fig_cond_chart", config=PLOTLY_CONFIG)
+        st.plotly_chart(fig_cond, key="fig_cond_chart", config=PLOTLY_CONFIG)
 
         st.caption("On $L_4$, SGD shows larger vertical oscillations because the gradient magnitude along y is substantially larger than along x.")
 
@@ -660,7 +658,7 @@ with tabs[2]:
                 activecolor="#58A6FF"
             )
         )
-        st.plotly_chart(fig_sens, use_container_width=True, key="fig_sens_chart", config=PLOTLY_CONFIG)
+        st.plotly_chart(fig_sens, key="fig_sens_chart", config=PLOTLY_CONFIG)
         st.caption("At η = 0.1 on the default bowl (where maximum Hessian eigenvalue is 100), constant-step gradient descent exceeds the stability bound (η > 2/λ_max = 0.02).")
 
 
