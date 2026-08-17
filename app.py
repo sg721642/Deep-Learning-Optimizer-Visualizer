@@ -682,13 +682,18 @@ with tabs[3]:
         st.markdown(r"""
         ##### Nesterov Accelerated Gradient (NAG)
         **Update Rule:**
-        $$\theta_{\text{lookahead}} = \theta_t - \beta v_{t-1}$$
+        $$\theta_{\text{lookahead}} = \theta_t - \eta \beta v_{t-1}$$
         $$v_t = \beta v_{t-1} + (1 - \beta) \nabla L(\theta_{\text{lookahead}})$$
         $$\theta_{t+1} = \theta_t - \eta v_t$$
 
+        > **Implementation note:** The PDF shorthand writes $\theta_t - \beta v_{t-1}$, but because
+        > $v$ is an EMA of gradients (gradient units) and $\theta$ lives in parameter space, the
+        > lookahead displacement must be scaled by $\eta$ — exactly as in the final update
+        > $\theta_{t+1} = \theta_t - \eta v_t$ — to keep both steps dimensionally consistent.
+
         **Mechanism:**
         - Standard Momentum computes the gradient at the current position $\theta_t$ and adds accumulated velocity.
-        - NAG evaluates the gradient at the look-ahead point $\theta_t - \beta v_{t-1}$. If accumulated velocity is carrying parameters up an opposing slope, the look-ahead gradient detects the slope in advance and applies an opposing corrective force before the full update is applied.
+        - NAG evaluates the gradient at the look-ahead point $\theta_t - \eta\beta v_{t-1}$. If accumulated velocity is carrying parameters up an opposing slope, the look-ahead gradient detects the slope in advance and applies an opposing corrective force before the full update is applied.
         """)
 
     with exp_adagrad:

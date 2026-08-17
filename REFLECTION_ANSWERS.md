@@ -92,7 +92,7 @@ In oscillatory directions, gradients alternate signs across consecutive mini-bat
 
 ### 3. How is NAG different from Momentum, and did the live app make that difference visible or was it subtle?
 **Answer:**
-- **Difference:** Standard momentum applies velocity based on the current position's gradient. NAG evaluates the gradient at an anticipated look-ahead position $\theta_{la} = \theta_t - \beta v_{t-1}$. If the accumulated velocity is about to carry parameters up an ascending slope, the look-ahead gradient detects the slope in advance and applies an opposing corrective force.
+- **Difference:** Standard momentum applies velocity based on the current position's gradient. NAG evaluates the gradient at an anticipated look-ahead position $\theta_{la} = \theta_t - \eta\beta v_{t-1}$ (the $\eta$ keeps the lookahead dimensionally consistent with the final update $\theta_{t+1} = \theta_t - \eta v_t$, since $v$ has gradient units). If the accumulated velocity is about to carry parameters up an ascending slope, the look-ahead gradient detects the slope in advance and applies an opposing corrective force.
 - **Visibility:** In the 2D playground, NAG shows slightly less overshoot when approaching the minimum compared to standard Momentum. In neural network training, the difference is subtle but produces stable loss descent near plateaus.
 
 ---
